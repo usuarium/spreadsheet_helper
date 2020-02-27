@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><?= title ?></title>
+    <base target="_top">
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+  </head>
+  <body stlye="margin: .3em;">
+    <table style="width: 100%;">
+        <thead>
+            <tr>
+                <th style="font-weight: bold;">Message</th>
+                <th style="font-weight: bold;">Location</th>
+            </tr>
+        </thead>
+        <tbody class="messages">
+<? for (var i = 0; i < errors.length; i++) { ?>
+            <tr>
+                <td><?= errors[i].message ?></td>
+                <td><input type="button" value="<?= errors[i].col ?> x <?= errors[i].row ?>" onclick="google.script.run.goToError(<?= errors[i].col ?>, <?= errors[i].row ?>);"></td>
+        	</tr>
+<? } ?>
+        </tbody>
+    </table>
+  </body>
+</html>
+
+

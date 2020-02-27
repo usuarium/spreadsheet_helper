@@ -1,0 +1,55 @@
+{
+  "name": "usuarium-spreasheet-helper",
+  "version": "4.1.0",
+  "description": "Setup a local development environment for Google Apps Script",
+  "author": {
+    "name": "Karoly Gossler",
+    "email": "connor@connor.hu",
+    "url": "https://blog.connor.hu"
+  },
+  "homepage": "https://usuarium.elte.hu/",
+  "license": "MIT",
+  "main": "src/main.js",
+  "scripts": {
+    "build": "webpack",
+    "upload": "clasp push",
+    "deploy": "npm run build && npm run upload",
+    "deploy:prod": "cross-env NODE_ENV=production npm run deploy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/usuarium/spreadsheet_helper.git"
+  },
+  "keywords": [
+    "google-apps-script",
+    "gsuite",
+    "apps-script"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/core": "^7.8.4",
+    "@babel/plugin-proposal-object-rest-spread": "^7.8.3",
+    "@babel/plugin-proposal-optional-chaining": "^7.8.3",
+    "@babel/preset-env": "^7.8.4",
+    "@google/clasp": "^2.3.0",
+    "@types/google-apps-script": "^1.0.10",
+    "babel-eslint": "^10.1.0",
+    "babel-loader": "^8.0.6",
+    "babel-plugin-add-module-exports": "^1.0.2",
+    "clean-webpack-plugin": "^3.0.0",
+    "copy-webpack-plugin": "^5.1.1",
+    "cross-env": "^7.0.0",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-loader": "^3.0.3",
+    "eslint-plugin-googleappsscript": "^1.0.3",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-prettier": "^3.1.2",
+    "gas-webpack-plugin": "^1.0.2",
+    "prettier": "^1.19.1",
+    "terser-webpack-plugin": "^2.3.5",
+    "webpack": "^4.41.6",
+    "webpack-cli": "^3.3.11"
+  }
+}
