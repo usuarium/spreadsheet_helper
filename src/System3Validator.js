@@ -32,7 +32,9 @@ class System3Validator
   }
   
   validateHeaders() {
-    var expectedHeaders = this.system3.getHeaderTemplate();
+    let expectedHeaders = this.system3.getHeadersTemplate()
+    
+    Logger.log(expectedHeaders)
 
     var invalids = []
 

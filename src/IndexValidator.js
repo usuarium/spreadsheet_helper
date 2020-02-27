@@ -1,13 +1,3 @@
-function IndexValidatorStartValidation() {
-  const index = new Index()
-  
-  index.loadSheetData()
-  index.loadIndexLabelData()
-  let errors = index.validate()
-  
-  validatorResult.showValidatorSidebar('Index Validation Result', errors)
-}
-
 class Index
 {
   constructor() {
@@ -25,8 +15,7 @@ class Index
   }
   
   loadIndexLabelData() {
-    let contentText = UrlFetchApp.fetch("https://usuarium.elte.hu/api/index_labels").getContentText()
-    this.indexLabels = JSON.parse(contentText)
+    return UsuariumAPIClient.fetchIndexLabels()
   }
   
   validate() {

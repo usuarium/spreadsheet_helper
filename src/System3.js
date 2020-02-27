@@ -15,7 +15,13 @@ class System3
     this.loadSheetHeaders()
     this.loadSheetData()
     
+    this.documentName = SpreadsheetApp.getActiveSpreadsheet().getName()
+    
     this.determinateSheetState()
+  }
+  
+  static getBookIdentifier(documentName) {
+    return documentName.split(' - ')[1] * 1
   }
   
   loadSheetHeaders() {
@@ -75,34 +81,66 @@ class System3
     return headers;
   }
   
-  migrateSheet() {
-    if (this.hasTopicsColumn && this.hasPageLinkColumn) {
-      return
-    }
-
-    var result = this.validator.validateFeastCommuneToTopics()
-    if (result.length > 0) {
-      
-    }
-    
-    var sheet = SpreadsheetApp.getActiveSheet();
-    sheet.insertColumnAfter(8)
-    sheet.getRange('I1').setValue("TOPICS")
-    
-    this.loadSheetData();
-    this.determinateSheetState();
-  }
-  
   determinateSheetState() {
-    this.hasTopicsColumn = this.headers[8] === 'TOPICS' ? 2 : 1
+    this.hasTopicsColumn = this.headers[8] === 'TOPICS'
     
     let pageLinkPosition = this.headers.indexOf('PAGE LINK')
     
-    if (pageLinkPosition !== -1 && this.headers.indexOf('PAGE NUMBER (ORIGINAL)') === pageLinkPosition+1) {
+    if (pageLinkPosition !== -1 && this.headers.indexOf('PAGE NUMBER (ORIGINAL)') === pageLinkPosition-1) {
       this.hasPageLinkColumn = true;
     }
     else {
       this.hasPageLinkColumn = false;
     }
   }
+  
+  addTopicsColumn() {
+    var sheet = SpreadsheetApp.getActiveSheet();
+    sheet.insertColumnAfter(8)
+    sheet.getRange('I1').setValue("TOPICS")
+  }
+  
+  addPageLinkColumn() {
+    var sheet = SpreadsheetApp.getActiveSheet();
+    sheet.insertColumnAfter(20)
+    sheet.getRange('U1').setValue("PAGE LINK")
+  }
+  
+  migrateSheet() {
+    if (!this.hasTopicsColumn) {
+      this.addTopicsColumn()
+    }
+    
+    if (!this.hasPageLinkColumn) {
+      this.addPageLinkColumn()
+    }
+
+    this.loadSheetData();
+    this.determinateSheetState();
+  }
+  
+  migrateShelfmark() {
+    if (this.documentName.indexOf(' - ') === -1) {
+      throw new Error('Can\'t find the shelfmark')
+    }
+    
+    let shelfmark = System3.getBookIdentifier(this.documentName)
+    
+    if (shelfmark <= 10000) {
+      return
+    }
+    
+    let bookId = UsuariumAPIClient.fetchBookId(shelfmark)
+    this.documentName = this.documentName.replace(` - ${shelfmark}`, ` - ${bookId}`)
+    
+    SpreadsheetApp.getActiveSpreadsheet().rename(this.documentName)
+  }
+  
+  fillPageLinks() {
+    let sheet = SpreadsheetApp.getActiveSheet();
+    let dataRange = sheet.getDataRange()
+    return sheet.getRange(2, 21, /*dataRange.getLastRow()-1*/ 5, 1).setFormulaR1C1('=PAGELINK(R[0]C[-2])');
+  }
+  
 }
+
