@@ -1,27 +1,45 @@
-var System3 = {
-  values: {
-    types: ['MISS', 'OFF', 'RIT']
-  },
-  headers: [],
-  data: [],
-  
-  resetTemporary: function () {
-    System3.sheetVersion = 1;
-    System3.headers = [];
-    System3.data = [];
-  },
+class System3
+{
+  constructor() {
+    this.values = {
+      types: ['MISS', 'OFF', 'RIT']
+    }
     
-  loadSheetData: function () {
-    var sheet = SpreadsheetApp.getActiveSheet();
-    var range = sheet.getRange('A1:V1');
-    System3.headers = range.getValues()[0];
+    this.headers = []
+    this.data = []
+    this.hasPageLinkColumn = false
+    this.hasTopicsColumn = false
     
-    var dataRange = sheet.getDataRange();
-    System3.data = sheet.getRange(2, 1, dataRange.getLastRow()-1, 22).getValues();
-  },
+    this.validator = new System3Validator(this)
+    
+    this.loadSheetHeaders()
+    this.loadSheetData()
+    
+    this.determinateSheetState()
+  }
   
-  getHeaderTemplate: function () {
-    var headers = [
+  loadSheetHeaders() {
+    this.headers = this.getSheetHeaders()
+  }
+  
+  loadSheetData() {
+    this.data = this.getSheetData()
+  }
+  
+  getSheetHeaders() {
+    let sheet = SpreadsheetApp.getActiveSheet();
+    let range = sheet.getRange('A1:V1');
+    return range.getValues()[0];
+  }
+  
+  getSheetData() {
+    let sheet = SpreadsheetApp.getActiveSheet();
+    let dataRange = sheet.getDataRange()
+    return sheet.getRange(2, 1, dataRange.getLastRow()-1, 22).getValues();
+  }
+  
+  getHeadersTemplate() {
+    let headers = [
       'ID',
       'TYPE',
       'PART',
@@ -45,32 +63,46 @@ var System3 = {
       'MADE BY'
     ];
 
-    if (System3.sheetVersion === 1) {
-      return headers;
+    if (this.hasTopicsColumn) {
+      headers = headers.splice(8, 0, 'TOPICS');
+    }
+    
+    if (this.hasPageLinkColumn) {
+      let originalPageNumberPosition = headers.indexOf('PAGE NUMBER (ORIGINAL)')
+      headers = headers.splice(originalPageNumberPosition+1, 0, 'PAGE LINK')
     }
       
-    return headers.splice(8, 0, 'TOPICS');
-  },
+    return headers;
+  }
   
-  migrateSheet: function () {
-    if (System3.sheetVersion !== 1) {
+  migrateSheet() {
+    if (this.hasTopicsColumn && this.hasPageLinkColumn) {
       return
     }
 
-    var result = System3Validator.validateFeastCommuneToTopics()
+    var result = this.validator.validateFeastCommuneToTopics()
     if (result.length > 0) {
-      ValidatorResultUI.addResults(result)
-      throw new Error('migrate failed due errors')
+      
     }
     
     var sheet = SpreadsheetApp.getActiveSheet();
     sheet.insertColumnAfter(8)
     sheet.getRange('I1').setValue("TOPICS")
     
-    System3.resetTemporary();
-    System3.loadSheetData();
-    System3.determinateSheetVersion();
+    this.loadSheetData();
+    this.determinateSheetState();
+  }
+  
+  determinateSheetState() {
+    this.hasTopicsColumn = this.headers[8] === 'TOPICS' ? 2 : 1
+    
+    let pageLinkPosition = this.headers.indexOf('PAGE LINK')
+    
+    if (pageLinkPosition !== -1 && this.headers.indexOf('PAGE NUMBER (ORIGINAL)') === pageLinkPosition+1) {
+      this.hasPageLinkColumn = true;
+    }
+    else {
+      this.hasPageLinkColumn = false;
+    }
   }
 }
-
-

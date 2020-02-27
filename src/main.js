@@ -11,3 +11,14 @@ function onOpen() {
     //   .addItem('Validate and Fill', 'System3ValidatorStartValidation'))
     .addToUi();
 }
+
+
+var System3ValidatorStartValidation = function () {
+  let system3 = new System3()
+  let result = system3.validator.validateHeaders()
+
+  if (result.length > 0) {
+    validatorResult.showValidatorSidebar('System3 Validator Result', result)
+    return;
+  }
+}
