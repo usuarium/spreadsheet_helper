@@ -33,8 +33,6 @@ class System3Validator
   
   validateHeaders() {
     let expectedHeaders = this.system3.getHeadersTemplate()
-    
-    Logger.log(expectedHeaders)
 
     var invalids = []
 
@@ -51,3 +49,4 @@ class System3Validator
     return invalids
   }
 }
+

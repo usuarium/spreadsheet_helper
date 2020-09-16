@@ -17,7 +17,7 @@
 <? for (var i = 0; i < errors.length; i++) { ?>
             <tr>
                 <td><?= errors[i].message ?></td>
-                <td><input type="button" value="<?= errors[i].col ?> x <?= errors[i].row ?>" onclick="google.script.run.goToError(<?= errors[i].col ?>, <?= errors[i].row ?>);"></td>
+                <td><input type="button" value="R: <?= errors[i].row ?> C: <?= errors[i].col ?>" onclick="google.script.run.goToError(<?= errors[i].row ?>, <?= errors[i].col ?>);"></td>
         	</tr>
 <? } ?>
         </tbody>

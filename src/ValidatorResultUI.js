@@ -15,10 +15,3 @@ class ValidatorResultUI
 }
 
 const validatorResult = new ValidatorResultUI()
-
-function goToError(col, row) {
-  col *= 1
-  row *= 1
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  sheet.getRange(row, col).activateAsCurrentCell();
-}
