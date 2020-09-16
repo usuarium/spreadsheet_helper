@@ -830,5 +830,24 @@ describe('tests System3', function() {
         sheetWrapperMock.verify()
         sheetWrapperMock.restore()
     })
+    
+    it('tests Gen is empty', () => {
+        let rawString = '	748		MISS	T	Qu	Gen	Gen		Corp	Corp	M2	Mass Propers		1	Officium de Corpore Christi a LXX usque ad Pascha.	G/A	Intr		Panem caeli dedit nobis	376	151v			KK'
+        let rawData = rawString.split("\n").map(r => r.split("\t"))
+
+        let rawResultString = '	748		MISS	V	Qu	Gen	Gen		Corp	Corp	M2	Mass Propers		1	Officium de Corpore Christi a LXX usque ad Pascha.	G/A	Intr		Panem caeli dedit nobis	376	151v			KK'
+        let resultData = rawResultString.split("\n").map(r => r.split("\t"))
+        
+        let sheetWrapperMock = sinon.mock(system3.sheetWrapper)
+        sheetWrapperMock.expects('getDataRows').atLeast(1).returns(rawData)
+        sheetWrapperMock.expects('setValuesAt').atLeast(1).withArgs(resultData, {row: 2, col: 1, rows: 1, cols: 25})
+        
+        system3.fillEmptyFields(false)
+        assert.deepEqual(system3.data, resultData)
+        
+        sheetWrapperMock.verify()
+        sheetWrapperMock.restore()
+        
+    })
 });
 

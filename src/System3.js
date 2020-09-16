@@ -1041,13 +1041,30 @@ class System3
         let day = this.getRowDataWithName('day', row)
         let topic = this.getRowDataWithName('topics', row)
         
+        if (week === 'Gen') {
+            week = ''
+        }
+        
+        if (day === 'Gen') {
+            day = ''
+        }
+        
+        let numberOfFilledFields = 0
+        numberOfFilledFields += week.length > 0 ? 1 : 0
+        numberOfFilledFields += day.length > 0 ? 1 : 0
+        numberOfFilledFields += seasonMonth.length > 0 ? 1 : 0
+
+        if (numberOfFilledFields === 1) {
+            row[this.getIndexWithFieldName('part')] = 'V'
+        }
+        
         if (week.length > 0) {
             row[this.getIndexWithFieldName('part')] = 'T'
         }
-        if (week.length === 0 && seasonMonth.length > 0 && day.length > 0) {
+        else if (week.length === 0 && seasonMonth.length > 0 && day.length > 0) {
             row[this.getIndexWithFieldName('part')] = 'S'
         }
-        if (week.length === 0 && seasonMonth.length === 0 && day.length === 0) {
+        else if (week.length === 0 && seasonMonth.length === 0 && day.length === 0) {
             if (topic.length === 0) {
                 return false
             }
