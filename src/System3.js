@@ -161,8 +161,6 @@ class System3
             if (this.insertHeaderAfter('TOPICS', 'COMMUNE/VOTIVE') !== false) {
                 this.hasTopicsColumn = true
             }
-      
-            this.migrateTopics()
         }
 
         if (!this.hasPageLinkColumn) {
@@ -258,39 +256,6 @@ class System3
 
         let dataRange = sheet.getDataRange()
         return sheet.getRange(2, 21, dataRange.getLastRow()-1, 1).setFormulaR1C1('=PAGELINK(R[0]C[-2])');
-    }
-  
-    loadFeastCommuneTopicData() {
-        let indexOfFeast = this.headers.indexOf('FEAST')
-    
-        let sheet = SpreadsheetApp.getActiveSheet();
-        let dataRange = sheet.getDataRange()
-        return sheet.getRange(2, indexOfFeast + 1, dataRange.getLastRow()-1, 3).getValues()
-    }
-  
-    setTopicData(topic) {
-        let indexOfTopics = this.headers.indexOf('TOPICS')
-    
-        let sheet = SpreadsheetApp.getActiveSheet();
-        let dataRange = sheet.getDataRange()
-    
-        return sheet.getRange(2, indexOfTopics + 1, dataRange.getLastRow()-1, 1).setValues(topic)
-    }
-  
-    migrateTopics() {
-        let data = this.loadFeastCommuneTopicData()
-        let topics = data.map(row => {
-            if (row[0]) {
-                return [row[0]];
-            }
-            else if (row[1]) {
-                return [row[1]]
-            }
-      
-            return ['']
-        })
-    
-        this.setTopicData(topics)
     }
     
     getValidValues(fieldName, dependentValues) {
@@ -839,13 +804,18 @@ class System3
         
         // part
         row = this.fillPart(row)
-        
         if (row === false) {
             return false
         }
         
+        // mass hour
         row = this.fillMassHour(row)
+        if (row === false) {
+            return false
+        }
         
+        // topics
+        row = this.fillTopics(row)
         if (row === false) {
             return false
         }
@@ -1128,6 +1098,40 @@ class System3
         }
         
         return rows
+    }
+    
+    fillTopics(row) {
+        let feast = this.getRowDataWithName('feast', row)
+        let commune_votive = this.getRowDataWithName('commune_votive', row)
+        
+        let newValue = ''
+        if (feast.length > 0) {
+            newValue = feast
+        }
+
+        if (commune_votive.length > 0) {
+            newValue = commune_votive
+        }
+        
+        this.setRowDataWithName('topics', newValue, row)
+        
+        return row
+    }
+    
+    doFillSeries(rows, genreInfo) {
+        for (let genre of Object.keys(genreInfo)) {
+            let info = genreInfo[genre]
+            if (info.counter <= 1) {
+                continue
+            }
+            
+            let counter = 1
+            
+            for (let index of info.rows) {
+                this.setRowDataWithName('series', counter.toString(), rows[index])
+                counter++
+            }
+        }
     }
     
     fillSeries(rows) {

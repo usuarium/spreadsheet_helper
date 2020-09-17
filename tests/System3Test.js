@@ -850,6 +850,56 @@ describe('tests System3', function() {
         
     })
     
+    
+    it ('tests fillTopics', () => {
+        let row = []
+        
+        system3.setRowDataWithName('feast', 'val', row)
+        system3.setRowDataWithName('commune_votive', '', row)
+        
+        let expected = []
+        system3.setRowDataWithName('feast', 'val', expected)
+        system3.setRowDataWithName('commune_votive', '', expected)
+        system3.setRowDataWithName('topics', 'val', expected)
+        
+        assert.deepEqual(system3.fillTopics(row), expected)
+
+
+        row = []
+        system3.setRowDataWithName('feast', 'val', row)
+        system3.setRowDataWithName('commune_votive', 'val2', row)
+        
+        expected = []
+        system3.setRowDataWithName('feast', 'val', expected)
+        system3.setRowDataWithName('commune_votive', 'val2', expected)
+        system3.setRowDataWithName('topics', 'val2', expected)
+        
+        assert.deepEqual(system3.fillTopics(row), expected)
+
+
+        row = []
+        system3.setRowDataWithName('feast', '', row)
+        system3.setRowDataWithName('commune_votive', 'val3', row)
+        
+        expected = []
+        system3.setRowDataWithName('feast', '', expected)
+        system3.setRowDataWithName('commune_votive', 'val3', expected)
+        system3.setRowDataWithName('topics', 'val3', expected)
+        
+        assert.deepEqual(system3.fillTopics(row), expected)
+
+
+        row = []
+        system3.setRowDataWithName('feast', '', row)
+        system3.setRowDataWithName('commune_votive', '', row)
+        
+        expected = []
+        system3.setRowDataWithName('feast', '', expected)
+        system3.setRowDataWithName('commune_votive', '', expected)
+        system3.setRowDataWithName('topics', '', expected)
+        
+        assert.deepEqual(system3.fillTopics(row), expected)
+    })
     it ('tests fillType', () => {
         // todo
         let row = []
