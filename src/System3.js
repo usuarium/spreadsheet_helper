@@ -814,14 +814,18 @@ class System3
     fillEmptyFieldsInRow(row) {
         // genre
         let genre = this.getRowDataWithName('genre', row)
-        
         if (genre.length === 0) {
             return false
         }
         
         // layer
         row = this.fillLayer(row)
+        if (row === false) {
+            return false
+        }
         
+        // type
+        row = this.fillType(row)
         if (row === false) {
             return false
         }
@@ -1138,5 +1142,20 @@ class System3
         // }
         //
         // season+week+day+feast+ceremony
+    
+    fillType(row) {
+        let ceremony = this.getRowDataWithName('ceremony', row)
+        
+        if (ceremony === 'Mass Propers') {
+            this.setRowDataWithName('type', 'MISS', row)
+        }
+        else if (ceremony === 'Office Propers') {
+            this.setRowDataWithName('type', 'OFF', row)
+        }
+        else {
+            this.setRowDataWithName('type', 'RIT', row)
+        }
+
+        return row
     }
 }

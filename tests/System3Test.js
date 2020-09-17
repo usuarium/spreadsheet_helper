@@ -849,5 +849,19 @@ describe('tests System3', function() {
         sheetWrapperMock.restore()
         
     })
+    
+    it ('tests fillType', () => {
+        // todo
+        let row = []
+        
+        system3.setRowDataWithName('ceremony', 'Mass Propers', row)
+        
+        let expected = []
+        system3.setRowDataWithName('type', 'MISS', expected)
+        system3.setRowDataWithName('ceremony', 'Mass Propers', expected)
+        
+        assert.deepEqual(system3.fillType(row), expected)
+    })
+    
 });
 
