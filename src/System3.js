@@ -505,6 +505,16 @@ class System3
         return data === null ? '' : data
     }
     
+    setRowDataWithName(fieldName, value, row) {
+        let index = this.getIndexWithFieldName(fieldName)
+        
+        if (index === null) {
+            throw new Error('invalid index')
+        }
+        
+        row[index] = value
+    }
+    
     getTopicInfoWithLabel(topicToFind) {
         for (let topic of this.topics) {
             if (topic.name === topicToFind) {
