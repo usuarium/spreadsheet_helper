@@ -850,6 +850,29 @@ describe('tests System3', function() {
         
     })
     
+    it ('tests calcualtePart', () => {
+        // todo
+        let row = []
+        
+        system3.setRowDataWithName('season_month', 'Ian', row)
+        system3.setRowDataWithName('week', '', row)
+        system3.setRowDataWithName('day', 5.0, row)
+        system3.setRowDataWithName('feast', 'Vig.Ep', row)
+        system3.setRowDataWithName('commune_votive', 'BMV', row)
+        system3.setRowDataWithName('topics', 'BMV', row)
+        
+        let expected = []
+        system3.setRowDataWithName('part', 'S', expected)
+        system3.setRowDataWithName('season_month', 'Ian', expected)
+        system3.setRowDataWithName('week', '', expected)
+        system3.setRowDataWithName('day', 5.0, expected)
+        system3.setRowDataWithName('feast', 'Vig.Ep', expected)
+        system3.setRowDataWithName('commune_votive', 'BMV', expected)
+        system3.setRowDataWithName('topics', 'BMV', expected)
+        
+        assert.deepEqual(system3.fillPart(row), expected)
+    })
+    
     
     it ('tests fillTopics', () => {
         let row = []

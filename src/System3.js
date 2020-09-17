@@ -1019,11 +1019,14 @@ class System3
         return row
     }
     
-    fillPart(row) {
-        let week = this.getRowDataWithName('week', row)
-        let seasonMonth = this.getRowDataWithName('season_month', row)
-        let day = this.getRowDataWithName('day', row)
-        let topic = this.getRowDataWithName('topics', row)
+    calcualtePart(seasonMonth, week, day, topic) {
+        if (typeof day === 'number') {
+            day = day.toString()
+        }
+        
+        if (seasonMonth === 'Gen') {
+            seasonMonth = ''
+        }
         
         if (week === 'Gen') {
             week = ''
@@ -1038,15 +1041,17 @@ class System3
         numberOfFilledFields += day.length > 0 ? 1 : 0
         numberOfFilledFields += seasonMonth.length > 0 ? 1 : 0
 
+        let part = null
+
         if (numberOfFilledFields === 1) {
-            row[this.getIndexWithFieldName('part')] = 'V'
+            part = 'V'
         }
         
         if (week.length > 0) {
-            row[this.getIndexWithFieldName('part')] = 'T'
+            part = 'T'
         }
         else if (week.length === 0 && seasonMonth.length > 0 && day.length > 0) {
-            row[this.getIndexWithFieldName('part')] = 'S'
+            part = 'S'
         }
         else if (week.length === 0 && seasonMonth.length === 0 && day.length === 0) {
             if (topic.length === 0) {
@@ -1060,12 +1065,29 @@ class System3
             }
             
             if (topicInfo.kind === 1) {
-                row[this.getIndexWithFieldName('part')] = 'C'
+                part = 'C'
             }
             else if (topicInfo.votive) {
-                row[this.getIndexWithFieldName('part')] = 'V'
+                part = 'V'
             }
         }
+        
+        return part
+    }
+    
+    fillPart(row) {
+        let seasonMonth = this.getRowDataWithName('season_month', row)
+        let week = this.getRowDataWithName('week', row)
+        let day = this.getRowDataWithName('day', row)
+        let topic = this.getRowDataWithName('topics', row)
+        
+        let part = this.calcualtePart(seasonMonth, week, day, topic)
+        
+        if (part === false) {
+            return false
+        }
+        
+        this.setRowDataWithName('part', part, row)
         
         return row
     }
