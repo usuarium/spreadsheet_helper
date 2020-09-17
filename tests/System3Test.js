@@ -923,6 +923,73 @@ describe('tests System3', function() {
         
         assert.deepEqual(system3.fillTopics(row), expected)
     })
+    
+    it ('tests fillSeries', () => {
+        let rawString = `	748		RIT									minor blessing of water		1	Incipit exorcismus salis	S/C	F	
+	748		RIT									minor blessing of water		2		S/C	Ex	
+	748		RIT									minor blessing of water		3		S/C	Or	
+	748		RIT									minor blessing of water		4	Sequitur exorcismus aquae	S/C	Ex	
+	748		RIT									minor blessing of water		5		S/C	Or	
+	748		RIT									minor blessing of water		6	Hic mittatur sal in aquam.	S/C	F	
+	748		RIT									minor blessing of water		7	Benedictio amborum	S/C	Or	
+	748		RIT									minor blessing of water		8		S/C	Ben	
+	748		RIT									minor blessing of water		9	Responsorium sine verso dicitur	G/A	Ant	
+	748		RIT									minor blessing of water		10		S/C	Or	
+	748		MISS	T	Adv	H1	f4				M2	Mass Propers		1		L	Ev	
+	748		MISS	T	Adv	H1	f6				M2	Mass Propers		1		L	Ev	
+	748		MISS	T	Adv	H1	f2		pro peccatis	pro peccatis	M2	Mass Propers		1	Nota quod per totum adventum nisi festa sanctorum impediant ferialis diebus iste ordo est observandus.Feria secunda cantatur pro peccatis Si iniquitatis per totum ferialiter.Collecta Exaudi Domine supplicum sola.Item collecta dominicalis et de beata Virgine sub una conclusione dicuntur. Feria tertia pro pace Da pacem Domine per totum ferialiter. Collecta Deus a quo sancta desideria. Item collecta dominicalis et de beata Virgine. Feria quarta et sexta cantatur officium diminicale ferialiter prima collecta dominicalis sola.Item collecta de beata Virgine et communis sub una conclusione dicuntur. Feria quinta de patronis:Multae tribulationes iustorum per totum dominicaliter.Et nota quod licet dominicaliter cantetur tantum Gloria in excelsis.Sequentia.Credo et Ite missa est per totum adventum et LXX non cantantur et missa concluditur cum Benedicamus Domino.Item notandum quod undecumque missa cantatur in adventu hae duae collectae videlicet dominicalis et de beata Virgine observentur praeterquam in quattuor temporibus ut infra patebit. Sabbato de beata Virgine.	G/A	Intr	
+	748		MISS	T	Adv	H1	f2		pro peccatis	pro peccatis	M2	Mass Propers		2		S/C	Coll	
+	748		MISS	T	Adv	H1	f3		pro pace	pro pace	M2	Mass Propers		1		G/A	Intr	
+	748		MISS	T	Adv	H1	f3		pro pace	pro pace	M2	Mass Propers		2		S/C	Coll	
+	748		MISS	T	Adv	H1	f5		de patronis	de patronis	M2	Mass Propers		1		G/A	Intr	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		1	Sabbato de beata Virgine	G/A	Intr	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		2	Kyrie eleison dominicale.Gloria in excelsis et Ite missa est non cantantur	G/A	IntrV	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		3		S/C	Coll	
+	748		MISS	S	Adv	Gen	S		Omnes sancti	Omnes sancti	M2	Mass Propers		4	Collecta dominicalis et communis	S/C	Coll	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		5		L	Lc	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		6		G/A	Gr	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		7		G/A	GrV	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		8	Sequentia non cantatur	G/A	All	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		9	Credo dicitur	L	Ev	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		10		G/A	Off	`
+        let rawData = rawString.split("\n").map(r => r.split("\t"))
+        
+        let expextedRawString = `	748		RIT									minor blessing of water		1	Incipit exorcismus salis	S/C	F	1
+	748		RIT									minor blessing of water		2		S/C	Ex	1
+	748		RIT									minor blessing of water		3		S/C	Or	1
+	748		RIT									minor blessing of water		4	Sequitur exorcismus aquae	S/C	Ex	2
+	748		RIT									minor blessing of water		5		S/C	Or	2
+	748		RIT									minor blessing of water		6	Hic mittatur sal in aquam.	S/C	F	2
+	748		RIT									minor blessing of water		7	Benedictio amborum	S/C	Or	3
+	748		RIT									minor blessing of water		8		S/C	Ben	
+	748		RIT									minor blessing of water		9	Responsorium sine verso dicitur	G/A	Ant	
+	748		RIT									minor blessing of water		10		S/C	Or	4
+	748		MISS	T	Adv	H1	f4				M2	Mass Propers		1		L	Ev	
+	748		MISS	T	Adv	H1	f6				M2	Mass Propers		1		L	Ev	
+	748		MISS	T	Adv	H1	f2		pro peccatis	pro peccatis	M2	Mass Propers		1	Nota quod per totum adventum nisi festa sanctorum impediant ferialis diebus iste ordo est observandus.Feria secunda cantatur pro peccatis Si iniquitatis per totum ferialiter.Collecta Exaudi Domine supplicum sola.Item collecta dominicalis et de beata Virgine sub una conclusione dicuntur. Feria tertia pro pace Da pacem Domine per totum ferialiter. Collecta Deus a quo sancta desideria. Item collecta dominicalis et de beata Virgine. Feria quarta et sexta cantatur officium diminicale ferialiter prima collecta dominicalis sola.Item collecta de beata Virgine et communis sub una conclusione dicuntur. Feria quinta de patronis:Multae tribulationes iustorum per totum dominicaliter.Et nota quod licet dominicaliter cantetur tantum Gloria in excelsis.Sequentia.Credo et Ite missa est per totum adventum et LXX non cantantur et missa concluditur cum Benedicamus Domino.Item notandum quod undecumque missa cantatur in adventu hae duae collectae videlicet dominicalis et de beata Virgine observentur praeterquam in quattuor temporibus ut infra patebit. Sabbato de beata Virgine.	G/A	Intr	
+	748		MISS	T	Adv	H1	f2		pro peccatis	pro peccatis	M2	Mass Propers		2		S/C	Coll	
+	748		MISS	T	Adv	H1	f3		pro pace	pro pace	M2	Mass Propers		1		G/A	Intr	
+	748		MISS	T	Adv	H1	f3		pro pace	pro pace	M2	Mass Propers		2		S/C	Coll	
+	748		MISS	T	Adv	H1	f5		de patronis	de patronis	M2	Mass Propers		1		G/A	Intr	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		1	Sabbato de beata Virgine	G/A	Intr	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		2	Kyrie eleison dominicale.Gloria in excelsis et Ite missa est non cantantur	G/A	IntrV	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		3		S/C	Coll	1
+	748		MISS	S	Adv	Gen	S		Omnes sancti	Omnes sancti	M2	Mass Propers		4	Collecta dominicalis et communis	S/C	Coll	2
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		5		L	Lc	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		6		G/A	Gr	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		7		G/A	GrV	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		8	Sequentia non cantatur	G/A	All	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		9	Credo dicitur	L	Ev	
+	748		MISS	S	Adv	Gen	S		BMV	BMV	M2	Mass Propers		10		G/A	Off	`
+        let expextedRawData = expextedRawString.split("\n").map(r => r.split("\t"))
+        
+        let result = system3.fillSeries(rawData)
+        //
+        // console.log(result[0])
+        
+        // assert.deepEqual(result, expextedRawData)
+    })
+    
     it ('tests fillType', () => {
         // todo
         let row = []

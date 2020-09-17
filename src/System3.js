@@ -1167,17 +1167,41 @@ class System3
     }
     
     fillSeries(rows) {
-        // let grouppedData = {}
-        //
-        // for (let index in rows) {
-        //     let row = rows[index]
-        //     let genre = this.getRowDataWithName('genre', row)
-        //
-        //     let fieldNames = ['type', 'part', 'season_month', 'week', 'day', 'topics', 'ceremony']
-        //     let counterKey = this.counterKeyWithNames(row, fieldNames)
-        // }
-        //
-        // season+week+day+feast+ceremony
+        let genreCounter = {}
+        let prevCounterKey = null
+
+        for (let index in rows) {
+            let row = rows[index]
+            
+            this.setRowDataWithName('series', '', row)
+
+            let genre = this.getRowDataWithName('genre', row)
+            let fieldNames = ['season_month', 'week', 'day', 'topics', 'ceremony']
+            let counterKey = this.counterKeyWithNames(row, fieldNames)
+            
+            if (genre.length === 0) {
+                continue
+            }
+            
+            if (counterKey !== prevCounterKey) {
+                this.doFillSeries(rows, genreCounter)
+                genreCounter = {}
+                prevCounterKey = counterKey
+            }
+            
+            if (genreCounter[genre] === undefined) {
+                genreCounter[genre] = {
+                    counter: 0,
+                    rows: []
+                }
+            }
+            
+            genreCounter[genre].counter++
+            genreCounter[genre].rows.push(index)
+        }
+        
+        return rows
+    }
     
     fillType(row) {
         let ceremony = this.getRowDataWithName('ceremony', row)
