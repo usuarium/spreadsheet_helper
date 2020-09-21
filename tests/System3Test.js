@@ -75,6 +75,23 @@ describe('tests System3', function() {
         
         sheetWrapperMock.verify()
         sheetWrapperMock.restore()
+
+
+        sheetWrapperMock = sinon.mock(system3.sheetWrapper)
+        sheetWrapperMock.expects('getHeaders').once().returns('PART	SEASON/MONTH	WEEK	DAY	FEAST	MASS/HOUR	SEQUENCE	LAYER	GENRE	SERIES	ITEM	PAGE NUMBER (DIGITAL)	PAGE NUMBER (ORIGINAL)	REMARK'.split("\t"))
+        sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(0)
+        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(1, 'ID')
+        sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(1)
+        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(2, 'SHELFMARK')
+
+        system3.loadSheetHeaders()
+        
+        assert(system3.hasMissingColumn() === true)
+        system3.addMissingColumns()
+        
+        sheetWrapperMock.verify()
+        sheetWrapperMock.restore()
+        
     })
 
     it('tests System3.getValidValues', function() {

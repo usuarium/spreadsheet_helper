@@ -37,7 +37,12 @@ class SheetWrapper
     }
     
     insertColumnAfter(position) {
-        SpreadsheetApp.getActiveSheet().insertColumnAfter(position)
+        if (position == 0) {
+            SpreadsheetApp.getActiveSheet().insertColumnBefore(1)
+        }
+        else {
+            SpreadsheetApp.getActiveSheet().insertColumnAfter(position)
+        }
     }
   
     setHeaderValueAtPosition(position, header) {
