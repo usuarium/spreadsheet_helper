@@ -19,7 +19,6 @@ function onOpen() {
 function System3MigrateSheet_() {
     let system3 = new System3()
     system3.loadSheetHeaders()
-    system3.determinateSheetState()
 
     let result = system3.validator.validateHeaders()
 
@@ -28,20 +27,25 @@ function System3MigrateSheet_() {
         return;
     }
 
-    system3.migrateSheet()
+    if (system3.hasMissingColumn()) {
+        system3.addMissingColumns()
+    }
 }
 
 
 function System3FillEmptyValues_() {
     let system3 = new System3()
     system3.loadSheetHeaders()
-    system3.determinateSheetState()
 
     let result = system3.validator.validateHeaders()
 
     if (result.length > 0) {
         validatorResult.showValidatorSidebar('System3 Validator Result', result)
         return;
+    }
+
+    if (system3.hasMissingColumn()) {
+        system3.addMissingColumns()
     }
     
     system3.fillEmptyFields()
@@ -50,7 +54,6 @@ function System3FillEmptyValues_() {
 function System3ValidatorStartValidation_() {
     let system3 = new System3()
     system3.loadSheetHeaders()
-    system3.determinateSheetState()
 
     let result = system3.validator.validateHeaders()
 

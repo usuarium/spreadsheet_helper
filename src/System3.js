@@ -15,6 +15,34 @@ class System3
         
         this.indexLabels = []
         this.topics = []
+        
+        this.knownHeaders = [
+            'ID',
+            'SHELFMARK',
+            'SOURCE',
+            'TYPE',
+            'PART',
+            'SEASON/MONTH',
+            'WEEK',
+            'DAY',
+            'FEAST',
+            'COMMUNE/VOTIVE',
+            'TOPICS',
+            'MASS/HOUR',
+            'CEREMONY',
+            'MODULE',
+            'SEQUENCE',
+            'RUBRICS',
+            'LAYER',
+            'GENRE',
+            'SERIES',
+            'ITEM',
+            'PAGE NUMBER (DIGITAL)',
+            'PAGE NUMBER (ORIGINAL)',
+            'PAGE LINK',
+            'REMARK',
+            'MADE BY',
+        ]
     }
     
     async loadLists() {
@@ -25,7 +53,11 @@ class System3
         return SpreadsheetApp.getActiveSpreadsheet().getName()
     }
   
-    static getBookIdentifier(documentName) {
+    getBookIdentifier(documentName) {
+        if (documentName.indexOf(' - ') === -1) {
+            return null
+        }
+        
         return documentName.split(' - ')[1] * 1
     }
   
@@ -53,11 +85,9 @@ class System3
         
         this.doWriteData(this.data)
         
-        Logger.log(changedDataCoordinates)
-        
-        if (changedDataCoordinates.length > 0) {
-            this.markBackgroundsAt(changedDataCoordinates)
-        }
+        // if (changedDataCoordinates.length > 0) {
+        //     this.markBackgroundsAt(changedDataCoordinates)
+        // }
     }
     
     doWriteData(data, indexToWrite) {
@@ -83,6 +113,8 @@ class System3
     }
   
     getHeadersTemplate() {
+        // v1 cols: 
+        // PART	SEASON/MONTH	WEEK	DAY	FEAST	MASS/HOUR	SEQUENCE	LAYER	GENRE	SERIES	ITEM	PAGE NUMBER (DIGITAL)	PAGE NUMBER (ORIGINAL)	REMARK
         let headers = [
             'ID',
             'TYPE',
@@ -125,14 +157,7 @@ class System3
       
         return headers;
     }
-  
-    determinateSheetState() {
-        this.hasShelfmarkColumn = ArrayHelper.hasItem(this.headers, 'ID') && ArrayHelper.hasFieldAfterField(this.headers, 'SHELFMARK', 'ID')
-        this.hasSourceColumn = ArrayHelper.hasItem(this.headers, 'SHELFMARK') && ArrayHelper.hasFieldAfterField(this.headers, 'SOURCE', 'SHELFMARK')
-        this.hasTopicsColumn = ArrayHelper.hasItem(this.headers, 'COMMUNE/VOTIVE') && ArrayHelper.hasFieldAfterField(this.headers, 'TOPICS', 'COMMUNE/VOTIVE')
-        this.hasPageLinkColumn = ArrayHelper.hasItem(this.headers, 'PAGE NUMBER (ORIGINAL)') && ArrayHelper.hasFieldAfterField(this.headers, 'PAGE LINK', 'PAGE NUMBER (ORIGINAL)')
-    }
-  
+
     insertHeaderAfter(header, after) {
         let newHeaderIndex = ArrayHelper.insertItemAfter(this.headers, header, after)
       
@@ -140,8 +165,39 @@ class System3
             return false
         }
     
-        this.sheetWrapper.insertColumnAtPosition(newHeaderIndex + 1)
+        this.sheetWrapper.insertColumnAfter(newHeaderIndex + 1)
         this.sheetWrapper.setHeaderValueAtPosition(newHeaderIndex + 2, header)
+    }
+    
+    hasMissingColumn() {
+        for (let header of this.knownHeaders) {
+            if (this.headers.indexOf(header) === -1) {
+                return true
+            }
+        }
+        
+        return false
+    }
+  
+    addMissingColumns() {
+        for (let headerIndex in this.knownHeaders) {
+            let knownHeader = this.knownHeaders[headerIndex]
+            let currentHeaderAtPosition = this.headers[headerIndex]
+            
+            if (currentHeaderAtPosition === knownHeader) {
+                continue
+            }
+            
+            if (this.headers.indexOf(knownHeader) > -1) {
+                // exists but wrong position
+            }
+            else {
+                let insertPosition = this.knownHeaders.indexOf(knownHeader)
+                // not exitsts, create it
+                this.sheetWrapper.insertColumnAfter(insertPosition)
+                this.sheetWrapper.setHeaderValueAtPosition(insertPosition+1, knownHeader)
+            }
+        }
     }
   
     migrateSheet() {
@@ -180,36 +236,92 @@ class System3
   
     migrateShelfmark() {
         let documentName = this.sheetWrapper.getDocumentName()
-    
-        if (documentName.indexOf(' - ') === -1) {
-            throw new Error('Can\'t find the shelfmark')
+        let shelfmark = this.getBookIdentifier(documentName)
+        
+        if (shelfmark === null || shelfmark <= 10000) {
+            this.data = this.fillShelfmark(this.data, shelfmark)
         }
-    
-        let shelfmark = System3.getBookIdentifier(documentName)
-    
-        if (shelfmark <= 10000) {
-            this.fillShelfmark(shelfmark)
-            return
+        else {
+            let bookId = UsuariumAPIClient.fetchBookId(shelfmark)
+            documentName = documentName.replace(` - ${shelfmark}`, ` - ${bookId}`)
+            this.sheetWrapper.setDocumentName(documentName)
+            this.data = this.fillShelfmark(this.data, bookId)
         }
-    
-        let bookId = UsuariumAPIClient.fetchBookId(shelfmark)
-        documentName = documentName.replace(` - ${shelfmark}`, ` - ${bookId}`)
-        this.sheetWrapper.setDocumentName(documentName)
-        this.fillShelfmark(bookId)
+
+        this.writeData()
     }
   
-    fillShelfmark(shelfmark) {
+    fillShelfmark(rows, newShelfmark) {
         if (!this.hasShelfmarkColumn) {
-            return
+            return rows
         }
-    
-        let sheet = SpreadsheetApp.getActiveSheet();
-        let firstPageLinkCellValue = sheet.getRange(2, 2).getValue()
-        if (firstPageLinkCellValue && firstPageLinkCellValue.length > 0) {
-            return
+        
+        // data
+        let shelfmarks = []
+        for (let row of rows) {
+            let shelfmark = this.getRowDataWithName('shelfmark', row)
+            
+            if (shelfmark.length === 0) {
+                continue
+            }
+            
+            shelfmark *= 1
+            
+            if (shelfmark < 10000) {
+                continue
+            }
+            
+            if (shelfmarks.indexOf(shelfmark) === -1) {
+                shelfmarks.push(shelfmark)
+            }
         }
-    
-        this.sheetWrapper.setValueAt(shelfmark, {row: 2, col: 2, rows: this.sheetWrapper.getLastRow() - 1, cols: 1})
+        
+        if (shelfmarks.length >= 1) {
+            // multiple
+            let shelfmarkTransformer = {}
+            let hasOldShelfmark = false
+            for (let shelfmark of shelfmarks) {
+                if (shelfmark >= 10000) {
+                    hasOldShelfmark = true
+                    
+                    shelfmarkTransformer[shelfmark] = UsuariumAPIClient.fetchBookId(shelfmark)
+                }
+            }
+            
+            if (hasOldShelfmark === false) {
+                return rows
+            }
+            
+            for (let row of rows) {
+                let shelfmark = this.getRowDataWithName('shelfmark', row)
+            
+                if (shelfmark.length === 0) {
+                    continue
+                }
+            
+                shelfmark *= 1
+                
+                if (shelfmark < 10000) {
+                    continue
+                }
+                
+                if (shelfmarkTransformer[shelfmark] === undefined) {
+                    continue
+                }
+                
+                this.setRowDataWithName('shelfmark', shelfmarkTransformer[shelfmark], row)
+            }
+        }
+        
+        if (newShelfmark === null) {
+            return rows
+        }
+        
+        for (let row of rows) {
+            this.setRowDataWithName('shelfmark', newShelfmark, row)
+        }
+        
+        return rows
     }
     
     migrateGenre() {
@@ -1118,7 +1230,7 @@ class System3
         for (let index in rows) {
             let row = rows[index]
             let type = this.getRowDataWithName('type', row)
-            let fieldNames = type === 'RIT' ? ['type', 'ceremony'] : ['ceremony', 'season_month', 'week', 'day', 'mass_hour']
+            let fieldNames = type === 'RIT' ? ['shelfmark', 'type', 'ceremony'] : ['shelfmark', 'ceremony', 'season_month', 'week', 'day', 'mass_hour']
             let newCounterKey = this.counterKeyWithNames(row, fieldNames)
             
             if (counterKey !== newCounterKey) {

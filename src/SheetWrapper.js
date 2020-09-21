@@ -36,7 +36,7 @@ class SheetWrapper
         return sheet.getRange(2, 1, dataRange.getLastRow()-1, 22).getValues();
     }
     
-    insertColumnAtPosition(position) {
+    insertColumnAfter(position) {
         SpreadsheetApp.getActiveSheet().insertColumnAfter(position)
     }
   

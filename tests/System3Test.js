@@ -14,344 +14,68 @@ before(async () => {
 
 describe('tests System3', function() {
 
-    it('tests System3.hasShelfmarkColumn', function() {
+    it('tests validateHeaders', () => {
         let sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
+        
+        sheetWrapperMock.expects('getHeaders').once().returns([
+            '', 'RUBRIC'
         ])
 
         system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.hasShelfmarkColumn, false)
+        
+        let validationResult = system3.validator.validateHeaders()
+        
+        assert(validationResult.length === 2)
+        
+        assert.deepEqual(validationResult[0], { row: 1, col: 1, message: 'Header cell can not empty' })
+        assert.deepEqual(validationResult[1], { row: 1, col: 2, message: 'Unknown header: "RUBRIC"' })
+        
         sheetWrapperMock.verify()
-
-        // worng position
-        sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','SHELFMARK','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.hasShelfmarkColumn, false)
-        sheetWrapperMock.verify()
-
-        sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','SHELFMARK','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.hasShelfmarkColumn, true)
-        sheetWrapperMock.verify()
-    });
-
-
-    it('tests System3.hasSourceColumn', function() {
+        sheetWrapperMock.restore()
+    })
+    
+    it('tests hasMissingColumn', () => {
         let sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
+        
+        sheetWrapperMock.expects('getHeaders').once().returns([
+            'RUBRIC'
         ])
 
         system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.hasSourceColumn, false)
+        
+        assert(system3.hasMissingColumn() === true)
         sheetWrapperMock.verify()
-
-        // worng position
-        sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','SOURCE','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.hasSourceColumn, false)
-        sheetWrapperMock.verify()
+        sheetWrapperMock.restore()
 
         sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','SHELFMARK','SOURCE','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
+        sheetWrapperMock.expects('getHeaders').once().returns([
+            'ID','SHELFMARK','SOURCE','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST',
+            'COMMUNE/VOTIVE','TOPICS','MASS/HOUR','CEREMONY','MODULE','SEQUENCE','RUBRICS',
+            'LAYER','GENRE','SERIES','ITEM','PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)',
+            'PAGE LINK','REMARK','MADE BY',
         ])
 
         system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.hasSourceColumn, true)
+        
+        assert(system3.hasMissingColumn() === false)
         sheetWrapperMock.verify()
-    });
-
-
-    it('tests System3.hasTopicsColumn', function() {
-        let sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.hasTopicsColumn, false)
-        sheetWrapperMock.verify()
-
-        // worng position
-        sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','TOPICS','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.hasTopicsColumn, false)
-        sheetWrapperMock.verify()
+        sheetWrapperMock.restore()
 
         sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','TOPICS','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
+        sheetWrapperMock.expects('getHeaders').once().returns('SHELFMARK	SOURCE	ID	TYPE	PART	SEASON/MONTH	WEEK	DAY	FEAST	COMMUNE/VOTIVE	MASS/HOUR	CEREMONY	MODULE	SEQUENCE	RUBRICS	LAYER	GENRE	SERIES	ITEM	PAGE NUMBER (DIGITAL)	PAGE NUMBER (ORIGINAL)	REMARK	MADE BY'.split("\t"))
+        sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(10)
+        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(11, 'TOPICS')
+        sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(22)
+        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(23, 'PAGE LINK')
 
         system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.hasTopicsColumn, true)
+        
+        assert(system3.hasMissingColumn() === true)
+        system3.addMissingColumns()
+        
         sheetWrapperMock.verify()
-    });
-
-
-    it('tests System3.hasPageLinkColumn', function() {
-        let sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.hasPageLinkColumn, false)
-        sheetWrapperMock.verify()
-
-        // worng position
-        sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE LINK','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.hasPageLinkColumn, false)
-        sheetWrapperMock.verify()
-
-        sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','PAGE LINK','REMARK','MADE BY'
-        ])
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.hasPageLinkColumn, true)
-        sheetWrapperMock.verify()
-    });
-
-
-    it('tests System3.getHeadersTemplate', function() {
-        let sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.getHeadersTemplate(), [
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','SHELFMARK','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.getHeadersTemplate(), [
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-        sheetWrapperMock.verify()
-
-
-        sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','SHELFMARK','SOURCE','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','TOPICS','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','PAGE LINK','REMARK','MADE BY'
-        ])
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-        assert.deepEqual(system3.getHeadersTemplate(), [
-            'ID','SHELFMARK','SOURCE','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','TOPICS','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','PAGE LINK','REMARK','MADE BY'
-        ])
-        sheetWrapperMock.verify()
-    });
-
-
-    it('tests System3.insertHeaderAfter with shelfmark header', function() {
-        let sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-        sheetWrapperMock.expects('insertColumnAtPosition').once().withArgs(1)
-        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withArgs(2, 'SHELFMARK')
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-
-        system3.insertHeaderAfter('SHELFMARK', 'ID')
-
-        assert.deepEqual(system3.headers, [
-            'ID','SHELFMARK','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-
-        sheetWrapperMock.verify()
-    });
-
-
-    it('tests System3.insertHeaderAfter with source header', function() {
-        let sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-        sheetWrapperMock.expects('insertColumnAtPosition').once().withArgs(1)
-        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withArgs(2, 'SHELFMARK')
-
-        sheetWrapperMock.expects('insertColumnAtPosition').once().withArgs(2)
-        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withArgs(3, 'SOURCE')
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-
-        system3.insertHeaderAfter('SHELFMARK', 'ID')
-        system3.insertHeaderAfter('SOURCE', 'SHELFMARK')
-
-        assert.deepEqual(system3.headers, [
-            'ID','SHELFMARK','SOURCE','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-
-        sheetWrapperMock.verify()
-    });
-
-
-    it('tests System3.insertHeaderAfter with topics header', function() {
-        let sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-        sheetWrapperMock.expects('insertColumnAtPosition').once().withArgs(8)
-        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withArgs(9, 'TOPICS')
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-
-        system3.insertHeaderAfter('TOPICS', 'COMMUNE/VOTIVE')
-
-        assert.deepEqual(system3.headers, [
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','TOPICS','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-
-        sheetWrapperMock.verify()
-    });
-
-
-    it('tests System3.insertHeaderAfter with page link header', function() {
-        let sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-        sheetWrapperMock.expects('insertColumnAtPosition').once().withArgs(19)
-        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withArgs(20, 'PAGE LINK')
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-
-        system3.insertHeaderAfter('PAGE LINK', 'PAGE NUMBER (ORIGINAL)')
-
-        assert.deepEqual(system3.headers, [
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','PAGE LINK','REMARK','MADE BY'
-        ])
-
-        sheetWrapperMock.verify()
-    });
-
-
-    it('tests System3.insertHeaderAfter with page link header', function() {
-        let sheetWrapperMock = sinon.mock(system3.sheetWrapper)
-        sheetWrapperMock.expects('getHeaders').atLeast(1).returns([
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','REMARK','MADE BY'
-        ])
-        sheetWrapperMock.expects('insertColumnAtPosition').once().withArgs(19)
-        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withArgs(20, 'PAGE LINK')
-
-        system3.loadSheetHeaders()
-        system3.determinateSheetState()
-
-        system3.insertHeaderAfter('PAGE LINK', 'PAGE NUMBER (ORIGINAL)')
-
-        assert.deepEqual(system3.headers, [
-            'ID','TYPE','PART','SEASON/MONTH','WEEK','DAY','FEAST','COMMUNE/VOTIVE','MASS/HOUR',
-            'CEREMONY','MODULE','SEQUENCE','RUBRICS','LAYER','GENRE','SERIES','ITEM',
-            'PAGE NUMBER (DIGITAL)','PAGE NUMBER (ORIGINAL)','PAGE LINK','REMARK','MADE BY'
-        ])
-
-        sheetWrapperMock.verify()
-    });
-
+        sheetWrapperMock.restore()
+    })
 
     it('tests System3.getValidValues', function() {
         assert.deepEqual(system3.getValidValues('type'), ['MISS', 'OFF', 'RIT'])
@@ -1001,6 +725,31 @@ describe('tests System3', function() {
         system3.setRowDataWithName('ceremony', 'Mass Propers', expected)
         
         assert.deepEqual(system3.fillType(row), expected)
+    })
+    
+    it('tests getBookIdentifier', () => {
+        assert(system3.getBookIdentifier('BREV OCarm 1543 - 40000') === 40000)
+        assert(system3.getBookIdentifier('MISS3 abbot') === null)
+    })
+    
+    it('tests fillShelfmark', () => {
+        let rows = [
+            [, '10001'],
+            [, '10002'],
+            [, '10003'],
+        ]
+        
+        rowsExpected = [
+            [, '1'],
+            [, '2'],
+            [, '3'],
+        ]
+        
+        system3.hasShelfmarkColumn = true
+        
+        assert.deepEqual(system3.fillShelfmark(rows, null), rowsExpected)
+        
+        
     })
     
 });
