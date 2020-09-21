@@ -1,0 +1,29 @@
+#!/bin/sh
+
+if [ -z "$1" ]
+then
+    scriptId=$(cat .clasp.json | jq ".scriptId" | tr -d '"')
+else
+    shelfmarkToFound=$1
+    
+    length=$(cat document_ids.json | jq '.document_ids | length')
+
+    for index in $(seq 0 $(( $length - 1)))
+    do
+        shelfmark=$(cat document_ids.json | jq ".document_ids[$index].shelfmark" | tr -d '"')
+        scriptId=""
+        if [ "$shelfmarkToFound" = "$shelfmark" ]
+        then
+            scriptId=$(cat document_ids.json | jq ".document_ids[$index].document_id" | tr -d '"')
+            break
+        fi
+    done
+
+    if [ -z "$scriptId" ]
+    then
+        echo "shelfmark not found"
+        exit 1
+    fi
+fi
+
+/usr/bin/open -a "/Applications/Google Chrome.app" "https://script.google.com/home/projects/$scriptId/executions?run_as=1"
