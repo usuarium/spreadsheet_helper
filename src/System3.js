@@ -662,7 +662,7 @@ class System3
             }
         }
         
-        return error
+        return errors
     }
     
     validate() {
