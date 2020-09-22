@@ -36,15 +36,20 @@ class NodeVMHelper {
     }
     
     async loadContext(directory, globals) {
-        globals = globals || {}
         this.ctx = vm.createContext(globals)
+
+        await this.addContext(this.ctx, directory, globals)
+    }
+    
+    async addContext(ctx, directory, globals) {
+        globals = globals || {}
         let files = await this.readJavascriptFiles(directory)
         
         for (let file of files) {
             let content = await fs.readFileAsync(file)
             
             try {
-                vm.runInContext(content, this.ctx, file)
+                vm.runInContext(content, ctx, file)
             }
             catch (error) {
                 console.error(error)

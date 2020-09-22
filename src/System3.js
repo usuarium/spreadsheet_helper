@@ -392,14 +392,14 @@ class System3
         }
         else if (fieldName === 'season_month') {
             let temporalValues = ['Adv', 'Nat', 'Ep', 'LXX', 'Qu', 'Pasc', 'Pent', 'Trin', 'Gen']
-            let sanctoralValues = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Nov', 'Dec']
+            let sanctoralValues = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
             
             let value = {
                 'T': temporalValues,
                 'PS': ['Gen', 'Ep', 'Trin'],
                 'S': sanctoralValues,
                 'C': '',
-                'V': ''
+                'V': [...temporalValues, ...sanctoralValues]
             }[dependentValues.part]
 
             return value === undefined ? null : value
@@ -412,7 +412,7 @@ class System3
                 'PS': 'Gen',
                 'S': '',
                 'C': '',
-                'V': ''
+                'V': [...temporalValues, '']
             }[dependentValues.part]
 
             return value === undefined ? null : value
@@ -423,7 +423,7 @@ class System3
                 'PS': ['Gen', 'D', 'ff', 'f2', 'f3', 'f4', 'f5', 'f6', 'S', 'Gen', 'F'],
                 'S': new RegExp(/^([1-9]|[12]\d|3[01])$/),
                 'C': '',
-                'V': ''
+                'V': ['D', 'ff', 'f2', 'f3', 'f4', 'f5', 'f6', 'S', 'Gen', 'F']
             }[dependentValues.part]
 
             return value === undefined ? null : value
@@ -585,7 +585,7 @@ class System3
             case 'sequence':
                 return 14;          // SEQUENCE
 
-            case 'ribrics':
+            case 'rubrics':
                 return 15;          // RUBRICS
 
             case 'layer':
@@ -648,9 +648,15 @@ class System3
         return null
     }
     
+    validate() {
+        this.loadSheetData()
+        Logger.log(this.data.length)
+        return this.validateRows(this.data)
+    }
+    
     validateRows(rows) {
         let errors = []
-        for (let rowIndex of rows) {
+        for (let rowIndex in rows) {
             let row = rows[rowIndex]
             let rowErrors = this.validateRow(row)
             
@@ -662,11 +668,9 @@ class System3
             }
         }
         
+        Logger.log(errors)
+        
         return errors
-    }
-    
-    validate() {
-        return this.validateRows(this.data)
     }
     
     /**
@@ -719,6 +723,12 @@ class System3
         result = this.validateType(row)
         if (result !== true) {
             result.cellIndex = this.getIndexWithFieldName('type')
+            errors.push(result)
+        }
+        
+        result = this.validateLayer(row)
+        if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('layer')
             errors.push(result)
         }
         
@@ -776,12 +786,6 @@ class System3
             errors.push(result)
         }
         
-        result = this.validateLayer(row)
-        if (result !== true) {
-            result.cellIndex = this.getIndexWithFieldName('layer')
-            errors.push(result)
-        }
-        
         return errors.length === 0 ? true : errors
     }
     
@@ -793,7 +797,7 @@ class System3
             return new CellValidationError('Digital Page Number missing')
         }
         
-        if (digitalPageNumber.match(/^\d+$/) === null) {
+        if (/^\d+$/.exec(digitalPageNumber) === null) {
             return new CellValidationError('Digital Page Number format is invalid')
         }
         
@@ -803,7 +807,7 @@ class System3
     // ok
     validateRubricsItem(row) {
         let item = this.getRowDataWithName('item', row)
-        let rubrics = this.getRowDataWithName('ribrics', row)
+        let rubrics = this.getRowDataWithName('rubrics', row)
         
         if (item.length === 0 && rubrics.length === 0) {
             return new CellValidationError('Either Rubric or Item is required')
@@ -820,45 +824,32 @@ class System3
             return new CellValidationError('Genre is required')
         }
         
-        let allGenres = this.getAllGenres()
+        let type = this.getRowDataWithName('type', row)
         
-        if (allGenres['MISS']['G/A'].indexOf(genre) !== -1) {
-            return true
+        if (type.length === 0) {
+            if (genre === 'Rub') {
+                type = 'MISS'
+            }
+            else {
+                return new CellValidationError('Type is required for Genre')
+            }
         }
 
-        if (allGenres['MISS']['L'].indexOf(genre) !== -1) {
-            return true
-        }
-
-        if (allGenres['MISS']['S/C'].indexOf(genre) !== -1) {
-            return true
-        }
-        
-        if (allGenres['OFF']['G/A'].indexOf(genre) !== -1) {
-            return true
-        }
-
-        if (allGenres['OFF']['L'].indexOf(genre) !== -1) {
-            return true
-        }
-
-        if (allGenres['OFF']['S/C'].indexOf(genre) !== -1) {
-            return true
+        let layer = this.getRowDataWithName('layer', row)
+        if (layer.length === 0) {
+            return new CellValidationError('Layer is required for Genre')
         }
         
-        if (allGenres['RIT']['G/A'].indexOf(genre) !== -1) {
-            return true
-        }
-
-        if (allGenres['RIT']['L'].indexOf(genre) !== -1) {
-            return true
-        }
-
-        if (allGenres['RIT']['S/C'].indexOf(genre) !== -1) {
-            return true
+        let genres = this.getValidValues('genre', {
+            type: type,
+            layer: layer
+        })
+        
+        if (genres.indexOf(genre) === -1) {
+            return new CellValidationError(`Genre is invalid: ${genre}`)
         }
         
-        return new CellValidationError('Genre is invalid')
+        return true
     }
     
     validateCeremony(row) {
@@ -877,22 +868,34 @@ class System3
             return new CellValidationError('Ceremony is required')
         }
         
-        // validate from list
-        for (let label of this.indexLabels) {
-            if (label.name === ceremony) {
-                return true
+        if (ceremony.length !== 0) {
+            for (let label of this.indexLabels) {
+                if (label.name === ceremony) {
+                    return true
+                }
             }
+        
+            return new CellValidationError(`Ceremony is invalid: ${ceremony}`)
         }
         
-        return new CellValidationError('Ceremony is invalid')
+        return true
     }
     
     validateMassHour(row) {
         let type = this.getRowDataWithName('type', row)
         let massHour = this.getRowDataWithName('mass_hour', row)
+        let genre = this.getRowDataWithName('genre', row)
         
-        if (type === 'RIT' && massHour.length > 0) {
-            return new CellValidationError('Mass/Hour must empty on RIT')
+        if (type === 'RIT') {
+            if (massHour.length > 0) {
+                return new CellValidationError('Mass/Hour must empty on RIT')
+            }
+            
+            return true
+        }
+        
+        if (genre === 'Rub') {
+            return true
         }
         
         if (massHour.length === 0) {
@@ -901,7 +904,7 @@ class System3
         
         let valids = this.getValidValues('mass_hour', {type: type})
         
-        if (valids.indexOf(massHour) === -1) {
+        if (valids === null || valids.indexOf(massHour) === -1) {
             return new CellValidationError('Mass/Hour value is invalid')
         }
         
@@ -910,6 +913,11 @@ class System3
     
     validateType(row) {
         let type = this.getRowDataWithName('type', row)
+        let genre = this.getRowDataWithName('genre', row)
+        
+        if (genre === 'Rub' && type.length === 0) {
+            return true
+        }
         
         if (type.length === 0) {
             return new CellValidationError('Type is required')
@@ -918,7 +926,7 @@ class System3
         let valids = this.getValidValues('type')
         
         if (valids.indexOf(type) === -1) {
-            return new CellValidationError('This type is invalid')
+            return new CellValidationError(`Type is invalid: ${type}`)
         }
         
         return true
@@ -927,15 +935,20 @@ class System3
     validatePart(row) {
         let type = this.getRowDataWithName('type', row)
         let part = this.getRowDataWithName('part', row)
+        let genre = this.getRowDataWithName('genre', row)
         
         if (part.length === 0) {
+            if (genre === 'Rub') {
+                return true
+            }
+            
             return new CellValidationError('Part is required')
         }
         
         let valids = this.getValidValues('part', {type: type})
         
-        if (valids.indexOf(type) === -1) {
-            return new CellValidationError('This type is invalid')
+        if (valids === null || valids.indexOf(part) === -1) {
+            return new CellValidationError(`Part is invalid: ${part}`)
         }
         
         return true
@@ -944,8 +957,13 @@ class System3
     validateSeasonMonth(row) {
         let seasonMonth = this.getRowDataWithName('season_month', row)
         let part = this.getRowDataWithName('part', row)
+        let genre = this.getRowDataWithName('genre', row)
 
         if (part.length === 0) {
+            if (genre === 'Rub') {
+                return true
+            }
+
             return new CellValidationError('Part is missing for Season/Month')
         }
         
@@ -965,8 +983,13 @@ class System3
     validateWeek(row) {
         let week = this.getRowDataWithName('week', row)
         let part = this.getRowDataWithName('part', row)
+        let genre = this.getRowDataWithName('genre', row)
         
         if (part.length === 0) {
+            if (genre === 'Rub') {
+                return true
+            }
+
             return new CellValidationError('Part is missing for Week')
         }
         
@@ -976,8 +999,8 @@ class System3
             return new CellValidationError('Invalid Part value for Week')
         }
         
-        if (validWeek.indexOf(validWeek) === -1) {
-            return new CellValidationError('Invalid Part value for Week')
+        if (validWeek.indexOf(week) === -1) {
+            return new CellValidationError(`Invalid Week value: ${week}`)
         }
         
         return true
@@ -986,8 +1009,13 @@ class System3
     validateDay(row) {
         let day = this.getRowDataWithName('day', row)
         let part = this.getRowDataWithName('part', row)
+        let genre = this.getRowDataWithName('genre', row)
         
         if (part.length === 0) {
+            if (genre === 'Rub') {
+                return true
+            }
+
             return new CellValidationError('Part is missing for Day')
         }
         
@@ -1004,7 +1032,7 @@ class System3
             
             return new CellValidationError('Invalid Part value for Day')
         }
-        else if (validDay.indexOf(validDay) === -1) {
+        else if (validDay.indexOf(day) === -1) {
             return new CellValidationError('Invalid Part value for Day')
         }
         
@@ -1022,13 +1050,19 @@ class System3
             return true
         }
         
-        let topicsInfo = this.getTopicInfoWithLabel(topics)
+        for (let topic of System3.iterableTopics(topics)) {
+            let topicsInfo = this.getTopicInfoWithLabel(topics)
         
-        if (topicsInfo === null) {
-            return new CellValidationError(`Topics not found: ${topics}`)
+            if (topicsInfo === null) {
+                return new CellValidationError(`Topics not found: ${topic}`)
+            }
         }
         
         return true
+    }
+    
+    static iterableTopics(topics) {
+        return topics.split(',').map(e => e.trim())
     }
     
     validateModule(row) {
@@ -1074,6 +1108,7 @@ class System3
     }
     
     validateMadeBy(row) {
+        return true
         let made = this.getRowDataWithName('made_by', row)
         
         if (made.length === 0) {

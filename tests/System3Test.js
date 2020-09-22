@@ -9,6 +9,9 @@ before(async () => {
     await vmHelper.loadContext(path.resolve(__dirname, '../src'), {
         console: console
     })
+    await vmHelper.addContext(vmHelper.ctx, path.resolve(__dirname, '../lib'), {
+        console: console
+    })
     system3 = vmHelper.instantiateClass('System3')
 });
 
@@ -121,7 +124,7 @@ describe('tests System3', function() {
         assert.deepEqual(system3.getValidValues('part', {type: 'invalid'}), null)
 
         assert.deepEqual(system3.getValidValues('season_month', {part: 'T'}), ['Adv', 'Nat', 'Ep', 'LXX', 'Qu', 'Pasc', 'Pent', 'Trin', 'Gen'])
-        assert.deepEqual(system3.getValidValues('season_month', {part: 'S'}), ['Adv', 'Nat', 'Ep', 'LXX', 'Qu', 'Pasc', 'Pent', 'Trin', 'Gen'])
+        assert.deepEqual(system3.getValidValues('season_month', {part: 'S'}), ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
         assert.deepEqual(system3.getValidValues('season_month', {part: 'C'}), '')
         assert.deepEqual(system3.getValidValues('season_month', {part: 'V'}), '')
 
@@ -261,10 +264,10 @@ describe('tests System3', function() {
         assert(system3.validateDigitalPageNumber(row) === true)
         
         row[20] = ''
-        assert(system3.validateDigitalPageNumber(row).constructor.name === 'Error')
+        assert(system3.validateDigitalPageNumber(row).constructor.name === 'CellValidationError')
 
         row[20] = '20z'
-        assert(system3.validateDigitalPageNumber(row).constructor.name === 'Error')
+        assert(system3.validateDigitalPageNumber(row).constructor.name === 'CellValidationError')
     });
 
     it('tests System3.validateGenre', function() {
@@ -295,10 +298,10 @@ describe('tests System3', function() {
         assert(system3.validateGenre(row))
 
         row[17] = ''
-        assert(system3.validateGenre(row).constructor.name === 'Error')
+        assert(system3.validateGenre(row).constructor.name === 'CellValidationError')
 
         row[17] = 'invalid'
-        assert(system3.validateGenre(row).constructor.name === 'Error')
+        assert(system3.validateGenre(row).constructor.name === 'CellValidationError')
         
     });
 
@@ -326,15 +329,15 @@ describe('tests System3', function() {
 
         row[3] = 'MISS'
         row[12] = ''
-        assert(system3.validateCeremony(row).constructor.name === 'Error')
+        assert(system3.validateCeremony(row).constructor.name === 'CellValidationError')
 
         row[3] = 'OFF'
         row[12] = 'Office Proper'
-        assert(system3.validateCeremony(row).constructor.name === 'Error')
+        assert(system3.validateCeremony(row).constructor.name === 'CellValidationError')
 
         row[3] = 'RIT'
         row[12] = 'invalid label'
-        assert(system3.validateCeremony(row).constructor.name === 'Error')
+        assert(system3.validateCeremony(row).constructor.name === 'CellValidationError')
     });
     
     it('tests System3.validateMassHour', () => {
@@ -354,23 +357,23 @@ describe('tests System3', function() {
         
         row[3] = 'MISS'
         row[11] = 'invalid'
-        assert(system3.validateMassHour(row).constructor.name === 'Error')
+        assert(system3.validateMassHour(row).constructor.name === 'CellValidationError')
         
         row[3] = 'MISS'
         row[11] = ''
-        assert(system3.validateMassHour(row).constructor.name === 'Error')
+        assert(system3.validateMassHour(row).constructor.name === 'CellValidationError')
 
         row[3] = 'OFF'
         row[11] = 'invalid'
-        assert(system3.validateMassHour(row).constructor.name === 'Error')
+        assert(system3.validateMassHour(row).constructor.name === 'CellValidationError')
 
         row[3] = 'OFF'
         row[11] = ''
-        assert(system3.validateMassHour(row).constructor.name === 'Error')
+        assert(system3.validateMassHour(row).constructor.name === 'CellValidationError')
 
         row[3] = 'RIT'
         row[11] = 'invalid'
-        assert(system3.validateMassHour(row).constructor.name === 'Error')
+        assert(system3.validateMassHour(row).constructor.name === 'CellValidationError')
         
     })
 
@@ -839,6 +842,19 @@ describe('tests System3', function() {
     it('tests getBookIdentifier', () => {
         assert(system3.getBookIdentifier('BREV OCarm 1543 - 40000') === 40000)
         assert(system3.getBookIdentifier('MISS3 abbot') === null)
+    })
+    
+    it('tests validateRows', () => {
+        let rawString = `	1145		MISS	S	Jan		13		Hilarius Pictaviensis, Remigius, Agritius	Hilarius Pictaviensis, Remigius, Agritius	M2	Mass Propers		1	Sancti Hilarii Remigii et Agritii episcoporum. 	S/C	BenP		Ds qui es fundator fidei 	27				FMI`
+        let rawData = rawString.split("\n").map(r => r.split("\t"))
+        
+        system3.indexLabels = [
+            {
+                name: 'Mass Propers',
+            }
+        ]
+        
+        console.log(system3.validateRows(rawData))
     })
     
     // it('tests fillShelfmark', () => {
