@@ -1,6 +1,6 @@
 var usuariumMenu;
 
-let version = 'b3a1ef5' // current version
+let version = 'DEV' // current version
 
 function onOpen() {
     SpreadsheetApp.getUi().createMenu('Usuarium')
@@ -73,6 +73,11 @@ function System3ValidatorStartValidation_() {
         // todo feedback
         return
     }
+    
+    system3.loadLists()
+    let errors = system3.validate()
+
+    validatorResult.showValidatorSidebar('Conspectus Validation Result', errors)
 }
 
 function IndexValidatorStartValidation_() {

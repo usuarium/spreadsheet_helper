@@ -648,30 +648,51 @@ class System3
         return null
     }
     
+    validateRows(rows) {
+        let errors = []
+        for (let rowIndex of rows) {
+            let row = rows[rowIndex]
+            let rowErrors = this.validateRow(row)
+            
+            if (rowErrors !== true) {
+                for (let error of rowErrors) {
+                    error.rowIndex = rowIndex
+                    errors.push(error)
+                }
+            }
+        }
+        
+        return error
+    }
+    
+    validate() {
+        return this.validateRows(this.data)
+    }
+    
     /**
      * VALIDATION
      *
-     * TYPE >
-     * PART >
-     * SEASON/MONTH >
-     * WEEK >
-     * DAY > 
-     * FEAST > 
-     * COMMUNE/VOTIVE > 
-     * TOPICS > 
-     * MASS/HOUR > 
-     * CEREMONY >
+     * TYPE >                       DONE
+     * PART >                       DONE
+     * SEASON/MONTH >               DONE
+     * WEEK >                       DONE
+     * DAY >                        DONE
+     * FEAST >                      DEPRECATED
+     * COMMUNE/VOTIVE >             DEPRECATED
+     * TOPICS >                     
+     * MASS/HOUR >                  DONE
+     * CEREMONY >                   DONE
      * MODULE > 
-     * SEQUENCE > 
-     * RUBRICS > 
+     * SEQUENCE >                   DONE
+     * RUBRICS >                    DONE
      * LAYER >
-     * GENRE >
+     * GENRE >                      DONE
      * SERIES >
-     * ITEM > 
+     * ITEM >                       DONE
      * PAGE NUMBER (DIGITAL) >      DONE
      * PAGE NUMBER (ORIGINAL) > 
      * REMARK > 
-     * MADE BY > 
+     * MADE BY >                    DONE
      */
     validateRow(row) {
         let errors = []
@@ -679,25 +700,87 @@ class System3
         
         result = this.validateDigitalPageNumber(row)
         if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('digital_page_number')
             errors.push(result)
         }
 
         result = this.validateRubricsItem(row)
         if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('item')
             errors.push(result)
         }
         
         result = this.validateGenre(row)
         if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('genre')
             errors.push(result)
         }
 
         result = this.validateType(row)
         if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('type')
             errors.push(result)
         }
         
-        // Genre, Module, Ceremony, Mass/hour
+        result = this.validateCeremony(row)
+        if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('ceremony')
+            errors.push(result)
+        }
+        
+        result = this.validateMassHour(row)
+        if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('mass_hour')
+            errors.push(result)
+        }
+
+        result = this.validatePart(row)
+        if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('part')
+            errors.push(result)
+        }
+
+        result = this.validateSeasonMonth(row)
+        if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('season_month')
+            errors.push(result)
+        }
+
+        result = this.validateWeek(row)
+        if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('week')
+            errors.push(result)
+        }
+
+        result = this.validateDay(row)
+        if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('day')
+            errors.push(result)
+        }
+        
+        result = this.validateTopics(row)
+        if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('topics')
+            errors.push(result)
+        }
+        
+        result = this.validateMadeBy(row)
+        if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('made_by')
+            errors.push(result)
+        }
+        
+        result = this.validateSequence(row)
+        if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('sequence')
+            errors.push(result)
+        }
+        
+        result = this.validateLayer(row)
+        if (result !== true) {
+            result.cellIndex = this.getIndexWithFieldName('layer')
+            errors.push(result)
+        }
         
         return errors.length === 0 ? true : errors
     }
@@ -707,11 +790,11 @@ class System3
         let digitalPageNumber = this.getRowDataWithName('digital_page_number', row)
 
         if (digitalPageNumber.length === 0) {
-            return new Error('Digital Page Number missing')
+            return new CellValidationError('Digital Page Number missing')
         }
         
         if (digitalPageNumber.match(/^\d+$/) === null) {
-            return new Error('Digital Page Number format is invalid')
+            return new CellValidationError('Digital Page Number format is invalid')
         }
         
         return true
@@ -723,7 +806,7 @@ class System3
         let rubrics = this.getRowDataWithName('ribrics', row)
         
         if (item.length === 0 && rubrics.length === 0) {
-            return new Error('Either Rubric or Item is required')
+            return new CellValidationError('Either Rubric or Item is required')
         }
         
         return true
@@ -734,7 +817,7 @@ class System3
         let genre = this.getRowDataWithName('genre', row)
         
         if (genre.length === 0) {
-            return new Error('Genre is required')
+            return new CellValidationError('Genre is required')
         }
         
         let allGenres = this.getAllGenres()
@@ -775,7 +858,7 @@ class System3
             return true
         }
         
-        return new Error('Genre is invalid')
+        return new CellValidationError('Genre is invalid')
     }
     
     validateCeremony(row) {
@@ -783,15 +866,15 @@ class System3
         let ceremony = this.getRowDataWithName('ceremony', row)
         
         if (type === 'MISS' && ceremony !== 'Mass Propers') {
-            return new Error('Ceremony at MISS must be Mass Propers')
+            return new CellValidationError('Ceremony at MISS must be Mass Propers')
         }
 
         if (type === 'OFF' && ceremony !== 'Office Propers') {
-            return new Error('Ceremony at MISS must be Mass Propers')
+            return new CellValidationError('Ceremony at MISS must be Mass Propers')
         }
         
         if (type === 'RIT' && ceremony.length === 0) {
-            return new Error('Ceremony is required')
+            return new CellValidationError('Ceremony is required')
         }
         
         // validate from list
@@ -801,7 +884,7 @@ class System3
             }
         }
         
-        return new Error('Ceremony is invalid')
+        return new CellValidationError('Ceremony is invalid')
     }
     
     validateMassHour(row) {
@@ -809,17 +892,17 @@ class System3
         let massHour = this.getRowDataWithName('mass_hour', row)
         
         if (type === 'RIT' && massHour.length > 0) {
-            return new Error('Mass/Hour must empty on RIT')
+            return new CellValidationError('Mass/Hour must empty on RIT')
         }
         
         if (massHour.length === 0) {
-            return new Error('Mass/Hour is required on MISS / OFF')
+            return new CellValidationError('Mass/Hour is required on MISS / OFF')
         }
         
         let valids = this.getValidValues('mass_hour', {type: type})
         
         if (valids.indexOf(massHour) === -1) {
-            return new Error('Mass/Hour value is invalid')
+            return new CellValidationError('Mass/Hour value is invalid')
         }
         
         return true
@@ -829,13 +912,13 @@ class System3
         let type = this.getRowDataWithName('type', row)
         
         if (type.length === 0) {
-            return new Error('Type is required')
+            return new CellValidationError('Type is required')
         }
         
         let valids = this.getValidValues('type')
         
         if (valids.indexOf(type) === -1) {
-            return new Error('This type is invalid')
+            return new CellValidationError('This type is invalid')
         }
         
         return true
@@ -846,32 +929,106 @@ class System3
         let part = this.getRowDataWithName('part', row)
         
         if (part.length === 0) {
-            return new Error('Part is required')
+            return new CellValidationError('Part is required')
         }
         
         let valids = this.getValidValues('part', {type: type})
         
         if (valids.indexOf(type) === -1) {
-            return new Error('This type is invalid')
+            return new CellValidationError('This type is invalid')
         }
         
         return true
     }
     
     validateSeasonMonth(row) {
+        let seasonMonth = this.getRowDataWithName('season_month', row)
+        let part = this.getRowDataWithName('part', row)
+
+        if (part.length === 0) {
+            return new CellValidationError('Part is missing for Season/Month')
+        }
         
+        let validSeasonMonth = this.getValidValues('season_month', {part: part})
+        
+        if (validSeasonMonth === null) {
+            return new CellValidationError('Invalid Part value for Season/Month')
+        }
+        
+        if (validSeasonMonth.indexOf(seasonMonth) === -1) {
+            return new CellValidationError('Invalid Part value for Season/Month')
+        }
+        
+        return true
     }
     
     validateWeek(row) {
+        let week = this.getRowDataWithName('week', row)
+        let part = this.getRowDataWithName('part', row)
         
+        if (part.length === 0) {
+            return new CellValidationError('Part is missing for Week')
+        }
+        
+        let validWeek = this.getValidValues('week', {part: part})
+        
+        if (validWeek === null) {
+            return new CellValidationError('Invalid Part value for Week')
+        }
+        
+        if (validWeek.indexOf(validWeek) === -1) {
+            return new CellValidationError('Invalid Part value for Week')
+        }
+        
+        return true
     }
     
     validateDay(row) {
+        let day = this.getRowDataWithName('day', row)
+        let part = this.getRowDataWithName('part', row)
         
+        if (part.length === 0) {
+            return new CellValidationError('Part is missing for Day')
+        }
+        
+        let validDay = this.getValidValues('day', {part: part})
+        
+        if (validDay === null) {
+            return new CellValidationError('Invalid Part value for Day')
+        }
+        
+        if (validDay instanceof RegExp) {
+            if (validDay.exec(day)) {
+                return true
+            }
+            
+            return new CellValidationError('Invalid Part value for Day')
+        }
+        else if (validDay.indexOf(validDay) === -1) {
+            return new CellValidationError('Invalid Part value for Day')
+        }
+        
+        return true
     }
     
     validateTopics(row) {
+        if (this.topics.length === 0) {
+            return new CellValidationError('Lift of Topics not loaded :(')
+        }
         
+        let topics = this.getRowDataWithName('topics', row)
+        
+        if (topics.length === 0) {
+            return true
+        }
+        
+        let topicsInfo = this.getTopicInfoWithLabel(topics)
+        
+        if (topicsInfo === null) {
+            return new CellValidationError(`Topics not found: ${topics}`)
+        }
+        
+        return true
     }
     
     validateModule(row) {
@@ -879,19 +1036,51 @@ class System3
     }
     
     validateSequence(row) {
+        let sequence = this.getRowDataWithName('sequence', row)
         
+        if (sequence.length === 0) {
+            return new CellValidationError('Sequence is missing')
+        }
+
+        let validSeq = this.getValidValues('sequence')
+        
+        if (validSeq.exec(sequence)) {
+            return true
+        }
+
+        return new CellValidationError('Invalid Sequence')
     }
     
     validateRubrics(row) {
     }
     
     validateLayer(row) {
+        let layer = this.getRowDataWithName('layer', row)
+        
+        if (layer.length === 0) {
+            return new CellValidationError('Missing Layer')
+        }
+        
+        let layerValues = this.getValidValues('layer')
+        
+        if (layerValues.indexOf(layer) === -1) {
+            return new CellValidationError(`Invalid Layer: ${layer}`)
+        }
+        
+        return true
     }
     
     validateSeries(row) {
     }
     
     validateMadeBy(row) {
+        let made = this.getRowDataWithName('made_by', row)
+        
+        if (made.length === 0) {
+            return new CellValidationError('Made by is missing')
+        }
+        
+        return true
     }
     
     /**
