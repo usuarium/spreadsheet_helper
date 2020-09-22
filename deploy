@@ -1,5 +1,9 @@
 #!/bin/sh
 
+currentId=$(git rev-parse --short HEAD)
+
+cat src/main.js | sed "s/let version = '[^']*'/let version = '${currentId}'/" > tmp && mv tmp src/main.js
+
 id=$1
 length=$(cat document_ids.json | jq '.document_ids | length')
 

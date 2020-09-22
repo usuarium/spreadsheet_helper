@@ -45,8 +45,9 @@ class System3
         ]
     }
     
-    async loadLists() {
-        this.indexLabels = await UsuariumAPIClient.fetchIndexLabels()
+    loadLists() {
+        this.indexLabels = UsuariumAPIClient.fetchIndexLabels()
+        this.topics =  UsuariumAPIClient.fetchTopics()
     }
   
     getDocumentName() {
@@ -180,6 +181,7 @@ class System3
     }
   
     addMissingColumns() {
+        let newHeaders = this.headers
         for (let headerIndex in this.knownHeaders) {
             let knownHeader = this.knownHeaders[headerIndex]
             let currentHeaderAtPosition = this.headers[headerIndex]
@@ -193,11 +195,16 @@ class System3
             }
             else {
                 let insertPosition = this.knownHeaders.indexOf(knownHeader)
+
                 // not exitsts, create it
                 this.sheetWrapper.insertColumnAfter(insertPosition)
                 this.sheetWrapper.setHeaderValueAtPosition(insertPosition+1, knownHeader)
+                
+                newHeaders.splice(insertPosition, 0, knownHeader)
             }
         }
+        
+        this.headers = newHeaders
     }
   
     migrateSheet() {
@@ -338,10 +345,6 @@ class System3
                 continue
             }
             
-            if (!genre.replace) {
-                Logger.log({genre: genre})
-            }
-            
             let newGenre = genre.replace(/[0-9]/, '')
             
             if (newGenre !== genre) {
@@ -375,23 +378,26 @@ class System3
             return ['MISS', 'OFF', 'RIT']
         }
         else if (fieldName === 'part') {
-            let missAndOffValues = ['T', 'S', 'C', 'V']
+            let missValues = ['T', 'S', 'C', 'V']
+            let offValues = ['PS', 'T', 'S', 'C', 'V']
             let ritValue = ['O']
             
             let value = {
                 'RIT': ritValue,
-                'MISS': missAndOffValues,
-                'OFF': missAndOffValues,
+                'MISS': missValues,
+                'OFF': offValues,
             }[dependentValues.type]
             
             return value === undefined ? null : value
         }
         else if (fieldName === 'season_month') {
-            let temporalAndSanctoralValues = ['Adv', 'Nat', 'Ep', 'LXX', 'Qu', 'Pasc', 'Pent', 'Trin', 'Gen']
+            let temporalValues = ['Adv', 'Nat', 'Ep', 'LXX', 'Qu', 'Pasc', 'Pent', 'Trin', 'Gen']
+            let sanctoralValues = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Nov', 'Dec']
             
             let value = {
-                'T': temporalAndSanctoralValues,
-                'S': temporalAndSanctoralValues,
+                'T': temporalValues,
+                'PS': ['Gen', 'Ep', 'Trin'],
+                'S': sanctoralValues,
                 'C': '',
                 'V': ''
             }[dependentValues.part]
@@ -403,6 +409,7 @@ class System3
             
             let value = {
                 'T': temporalValues,
+                'PS': 'Gen',
                 'S': '',
                 'C': '',
                 'V': ''
@@ -412,8 +419,9 @@ class System3
         }
         else if (fieldName === 'day') {
             let value = {
-                'T': new RegExp(/^([1-9]|[12]\d|3[01])$/),
-                'S': ['D', 'ff', 'f2', 'f3', 'f4', 'f5', 'f6', 'S', 'Gen', 'F'],
+                'T': ['D', 'ff', 'f2', 'f3', 'f4', 'f5', 'f6', 'S', 'Gen', 'F'],
+                'PS': ['Gen', 'D', 'ff', 'f2', 'f3', 'f4', 'f5', 'f6', 'S', 'Gen', 'F'],
+                'S': new RegExp(/^([1-9]|[12]\d|3[01])$/),
                 'C': '',
                 'V': ''
             }[dependentValues.part]
@@ -498,7 +506,8 @@ class System3
                     'Super munera', 'Immolatio', 'Post Sanctus', 'Post secreta', 'Post mysterium', 
                     'Ante orationem dominicam', 'Post orationem dominicam', 'Benedictio populi', 
                     'Post communionem', 'Post Eucharistiam', 'Consummatio missae', 'Consecratio',
-                ]
+                ],
+                'R': ['Rub']
             },
             'OFF': {
                 'G/A': [
@@ -510,14 +519,16 @@ class System3
                 ],
                 'S/C': [
                     'Cap', 'Or',
-                ]
+                ],
+                'R': ['Rub']
             },
             'RIT': {
                 'G/A': [],
                 'L': [],
                 'S/C': [
                     'F', 'Ex', 'Pf', 'Alloc', 'Lit', 'Abs', 'Ben',
-                ]
+                ],
+                'R': ['Rub']
             }
         }
 
@@ -637,6 +648,31 @@ class System3
         return null
     }
     
+    /**
+     * VALIDATION
+     *
+     * TYPE >
+     * PART >
+     * SEASON/MONTH >
+     * WEEK >
+     * DAY > 
+     * FEAST > 
+     * COMMUNE/VOTIVE > 
+     * TOPICS > 
+     * MASS/HOUR > 
+     * CEREMONY >
+     * MODULE > 
+     * SEQUENCE > 
+     * RUBRICS > 
+     * LAYER >
+     * GENRE >
+     * SERIES >
+     * ITEM > 
+     * PAGE NUMBER (DIGITAL) >      DONE
+     * PAGE NUMBER (ORIGINAL) > 
+     * REMARK > 
+     * MADE BY > 
+     */
     validateRow(row) {
         let errors = []
         let result = null
@@ -666,6 +702,7 @@ class System3
         return errors.length === 0 ? true : errors
     }
     
+    // ok
     validateDigitalPageNumber(row) {
         let digitalPageNumber = this.getRowDataWithName('digital_page_number', row)
 
@@ -680,6 +717,7 @@ class System3
         return true
     }
     
+    // ok
     validateRubricsItem(row) {
         let item = this.getRowDataWithName('item', row)
         let rubrics = this.getRowDataWithName('ribrics', row)
@@ -691,6 +729,7 @@ class System3
         return true
     }
     
+    // ok
     validateGenre(row) {
         let genre = this.getRowDataWithName('genre', row)
         
@@ -900,8 +939,8 @@ class System3
     
     fillEmptyFieldsInRow(row) {
         // genre
-        let genre = this.getRowDataWithName('genre', row)
-        if (genre.length === 0) {
+        row = this.fillGenre(row)
+        if (row === false) {
             return false
         }
         
@@ -919,7 +958,6 @@ class System3
         
         // ceremony
         row = this.fillCeremony(row)
-        
         if (row === false) {
             return false
         }
@@ -941,6 +979,23 @@ class System3
         if (row === false) {
             return false
         }
+        
+        return row
+    }
+    
+    fillGenre(row) {
+        let genre = this.getRowDataWithName('genre', row)
+        if (genre.length > 0) {
+            return row
+        }
+        
+        let rubrics = this.getRowDataWithName('rubrics', row)
+        
+        if (rubrics.length === 0) {
+            return false
+        }
+
+        this.setRowDataWithName('genre', 'Rub', row)
         
         return row
     }
@@ -968,6 +1023,22 @@ class System3
         
         row[this.getIndexWithFieldName('layer')] = layer
         
+        return row
+    }
+    
+    fillType(row) {
+        let ceremony = this.getRowDataWithName('ceremony', row)
+        
+        if (ceremony === 'Mass Propers') {
+            this.setRowDataWithName('type', 'MISS', row)
+        }
+        else if (ceremony === 'Office Propers') {
+            this.setRowDataWithName('type', 'OFF', row)
+        }
+        else if (ceremony.length > 0) {
+            this.setRowDataWithName('type', 'RIT', row)
+        }
+
         return row
     }
     
@@ -1131,7 +1202,7 @@ class System3
         return row
     }
     
-    calcualtePart(seasonMonth, week, day, topic) {
+    calcualtePart(type, seasonMonth, week, day, topic) {
         if (typeof day === 'number') {
             day = day.toString()
         }
@@ -1139,7 +1210,6 @@ class System3
         if (seasonMonth === 'Gen') {
             seasonMonth = ''
         }
-        
         if (week === 'Gen') {
             week = ''
         }
@@ -1153,34 +1223,71 @@ class System3
         numberOfFilledFields += day.length > 0 ? 1 : 0
         numberOfFilledFields += seasonMonth.length > 0 ? 1 : 0
 
-        let part = null
+        let part = ''
 
         if (numberOfFilledFields === 1) {
             part = 'V'
         }
         
+        // PS mukodesei tde betenni
         if (week.length > 0) {
             part = 'T'
         }
         else if (week.length === 0 && seasonMonth.length > 0 && day.length > 0) {
-            part = 'S'
+            let temporalValues = this.getValidValues('season_month', {part: 'T'})
+            
+            if (temporalValues.indexOf(seasonMonth) > -1) {
+                part = 'T'
+            }
+            else {
+                part = 'S'
+            }
         }
         else if (week.length === 0 && seasonMonth.length === 0 && day.length === 0) {
+            if (topic.length > 0) {
+                let topicInfo = this.getTopicInfoWithLabel(topic)
+            
+                if (topicInfo !== null) {
+                    if (topicInfo.kind === 1) {
+                        part = 'C'
+                    }
+                    else if (topicInfo.votive) {
+                        part = 'V'
+                    }
+                }
+                else {
+                    part = ''
+                }
+            }
+            else {
+                part = ''
+            }
+        }
+        
+        if (type === 'OFF') {
+            let validCount = 0
+            
+            let psValidSeason = this.getValidValues('season_month', {part: 'PS'})
+            if (seasonMonth === '' || psValidSeason.indexOf(seasonMonth) > -1) {
+                validCount++
+            }
+            
+            let psValidWeek = this.getValidValues('week', {part: 'PS'})
+            if (week === '' || psValidWeek.indexOf(week) > -1) {
+                validCount++
+            }
+
+            let psValidDay = this.getValidValues('day', {part: 'PS'})
+            if (day === '' || psValidDay.indexOf(day) > -1) {
+                validCount++
+            }
+            
             if (topic.length === 0) {
-                return false
+                validCount++
             }
             
-            let topicInfo = this.getTopicInfoWithLabel(topic)
-            
-            if (topicInfo === null) {
-                return false
-            }
-            
-            if (topicInfo.kind === 1) {
-                part = 'C'
-            }
-            else if (topicInfo.votive) {
-                part = 'V'
+            if (validCount === 4) {
+                part = 'PS'
             }
         }
         
@@ -1188,12 +1295,13 @@ class System3
     }
     
     fillPart(row) {
+        let type = this.getRowDataWithName('type', row)
         let seasonMonth = this.getRowDataWithName('season_month', row)
         let week = this.getRowDataWithName('week', row)
         let day = this.getRowDataWithName('day', row)
         let topic = this.getRowDataWithName('topics', row)
         
-        let part = this.calcualtePart(seasonMonth, week, day, topic)
+        let part = this.calcualtePart(type, seasonMonth, week, day, topic)
         
         if (part === false) {
             return false
@@ -1288,7 +1396,7 @@ class System3
             this.setRowDataWithName('series', '', row)
 
             let genre = this.getRowDataWithName('genre', row)
-            let fieldNames = ['season_month', 'week', 'day', 'topics', 'ceremony']
+            let fieldNames = ['shelfmark', 'season_month', 'week', 'day', 'topics', 'mass_hour', 'ceremony']
             let counterKey = this.counterKeyWithNames(row, fieldNames)
             
             if (genre.length === 0) {
@@ -1313,21 +1421,5 @@ class System3
         }
         
         return rows
-    }
-    
-    fillType(row) {
-        let ceremony = this.getRowDataWithName('ceremony', row)
-        
-        if (ceremony === 'Mass Propers') {
-            this.setRowDataWithName('type', 'MISS', row)
-        }
-        else if (ceremony === 'Office Propers') {
-            this.setRowDataWithName('type', 'OFF', row)
-        }
-        else {
-            this.setRowDataWithName('type', 'RIT', row)
-        }
-
-        return row
     }
 }

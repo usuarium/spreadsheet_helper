@@ -76,18 +76,36 @@ describe('tests System3', function() {
         sheetWrapperMock.verify()
         sheetWrapperMock.restore()
 
-
         sheetWrapperMock = sinon.mock(system3.sheetWrapper)
         sheetWrapperMock.expects('getHeaders').once().returns('PART	SEASON/MONTH	WEEK	DAY	FEAST	MASS/HOUR	SEQUENCE	LAYER	GENRE	SERIES	ITEM	PAGE NUMBER (DIGITAL)	PAGE NUMBER (ORIGINAL)	REMARK'.split("\t"))
         sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(0)
         sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(1, 'ID')
         sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(1)
         sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(2, 'SHELFMARK')
+        sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(2)
+        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(3, 'SOURCE')
+        sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(3)
+        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(4, 'TYPE')
+        sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(9)
+        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(10, 'COMMUNE/VOTIVE')
+        sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(10)
+        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(11, 'TOPICS')
+        sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(12)
+        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(13, 'CEREMONY')
+        sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(13)
+        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(14, 'MODULE')
+        sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(15)
+        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(16, 'RUBRICS')
+        sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(22)
+        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(23, 'PAGE LINK')
+        sheetWrapperMock.expects('insertColumnAfter').once().withExactArgs(24)
+        sheetWrapperMock.expects('setHeaderValueAtPosition').once().withExactArgs(25, 'MADE BY')
 
         system3.loadSheetHeaders()
         
         assert(system3.hasMissingColumn() === true)
         system3.addMissingColumns()
+        assert.deepEqual(system3.headers, system3.knownHeaders)
         
         sheetWrapperMock.verify()
         sheetWrapperMock.restore()
@@ -98,7 +116,7 @@ describe('tests System3', function() {
         assert.deepEqual(system3.getValidValues('type'), ['MISS', 'OFF', 'RIT'])
         
         assert.deepEqual(system3.getValidValues('part', {type: 'MISS'}), ['T', 'S', 'C', 'V'])
-        assert.deepEqual(system3.getValidValues('part', {type: 'OFF'}), ['T', 'S', 'C', 'V'])
+        assert.deepEqual(system3.getValidValues('part', {type: 'OFF'}), ['PS', 'T', 'S', 'C', 'V'])
         assert.deepEqual(system3.getValidValues('part', {type: 'RIT'}), ['O'])
         assert.deepEqual(system3.getValidValues('part', {type: 'invalid'}), null)
 
@@ -112,7 +130,7 @@ describe('tests System3', function() {
         assert.deepEqual(system3.getValidValues('week', {part: 'C'}), '')
         assert.deepEqual(system3.getValidValues('week', {part: 'V'}), '')
 
-        let regexp = system3.getValidValues('day', {part: 'T'})
+        let regexp = system3.getValidValues('day', {part: 'S'})
         assert(regexp.constructor.name === 'RegExp')
         for (let i = 1; i <= 31; i++) {
             assert(regexp.exec(i))
@@ -122,7 +140,7 @@ describe('tests System3', function() {
         assert(regexp.exec(32) === null)
         assert(regexp.exec(100) === null)
         
-        assert.deepEqual(system3.getValidValues('day', {part: 'S'}), ['D', 'ff', 'f2', 'f3', 'f4', 'f5', 'f6', 'S', 'Gen', 'F'])
+        assert.deepEqual(system3.getValidValues('day', {part: 'T'}), ['D', 'ff', 'f2', 'f3', 'f4', 'f5', 'f6', 'S', 'Gen', 'F'])
         assert.deepEqual(system3.getValidValues('day', {part: 'C'}), '')
         assert.deepEqual(system3.getValidValues('day', {part: 'V'}), '')
         
@@ -564,7 +582,7 @@ describe('tests System3', function() {
         
         let sheetWrapperMock = sinon.mock(system3.sheetWrapper)
         sheetWrapperMock.expects('getValuesAtColumn').atLeast(1).returns(genres)
-        sheetWrapperMock.expects('setValuesAt').atLeast(1).withArgs(expected, {row: 2, col: 15, rows: 10, cols: 1})
+        sheetWrapperMock.expects('setValuesAt').atLeast(1).withArgs(expected, {row: 2, col: 18, rows: 10, cols: 1})
         
         system3.migrateGenre()
         
@@ -594,7 +612,7 @@ describe('tests System3', function() {
     it ('tests calcualtePart', () => {
         // todo
         let row = []
-        
+        system3.setRowDataWithName('type', 'MISS', row)
         system3.setRowDataWithName('season_month', 'Ian', row)
         system3.setRowDataWithName('week', '', row)
         system3.setRowDataWithName('day', 5.0, row)
@@ -603,6 +621,7 @@ describe('tests System3', function() {
         system3.setRowDataWithName('topics', 'BMV', row)
         
         let expected = []
+        system3.setRowDataWithName('type', 'MISS', expected)
         system3.setRowDataWithName('part', 'S', expected)
         system3.setRowDataWithName('season_month', 'Ian', expected)
         system3.setRowDataWithName('week', '', expected)
@@ -612,6 +631,79 @@ describe('tests System3', function() {
         system3.setRowDataWithName('topics', 'BMV', expected)
         
         assert.deepEqual(system3.fillPart(row), expected)
+
+
+        row = []
+        system3.setRowDataWithName('type', 'OFF', row)
+        system3.setRowDataWithName('season_month', 'Gen', row)
+        system3.setRowDataWithName('week', 'Gen', row)
+        system3.setRowDataWithName('day', 'Gen', row)
+        system3.setRowDataWithName('topics', '', row)
+        
+        expected = []
+        system3.setRowDataWithName('type', 'OFF', expected)
+        system3.setRowDataWithName('part', 'PS', expected)
+        system3.setRowDataWithName('season_month', 'Gen', expected)
+        system3.setRowDataWithName('week', 'Gen', expected)
+        system3.setRowDataWithName('day', 'Gen', expected)
+        system3.setRowDataWithName('topics', '', expected)
+        
+        assert.deepEqual(system3.fillPart(row), expected)
+        
+        
+        row = []
+        system3.setRowDataWithName('type', 'OFF', row)
+        system3.setRowDataWithName('season_month', 'Ep', row)
+        system3.setRowDataWithName('week', 'Gen', row)
+        system3.setRowDataWithName('day', 'D', row)
+        system3.setRowDataWithName('topics', '', row)
+        
+        expected = []
+        system3.setRowDataWithName('type', 'OFF', expected)
+        system3.setRowDataWithName('part', 'PS', expected)
+        system3.setRowDataWithName('season_month', 'Ep', expected)
+        system3.setRowDataWithName('week', 'Gen', expected)
+        system3.setRowDataWithName('day', 'D', expected)
+        system3.setRowDataWithName('topics', '', expected)
+        
+        assert.deepEqual(system3.fillPart(row), expected)
+        
+        
+        row = []
+        system3.setRowDataWithName('type', 'OFF', row)
+        system3.setRowDataWithName('season_month', 'Trin', row)
+        system3.setRowDataWithName('week', 'Gen', row)
+        system3.setRowDataWithName('day', 'D', row)
+        system3.setRowDataWithName('topics', '', row)
+        
+        expected = []
+        system3.setRowDataWithName('type', 'OFF', expected)
+        system3.setRowDataWithName('part', 'PS', expected)
+        system3.setRowDataWithName('season_month', 'Trin', expected)
+        system3.setRowDataWithName('week', 'Gen', expected)
+        system3.setRowDataWithName('day', 'D', expected)
+        system3.setRowDataWithName('topics', '', expected)
+        
+        assert.deepEqual(system3.fillPart(row), expected)
+
+
+        row = []
+        system3.setRowDataWithName('type', 'OFF', row)
+        system3.setRowDataWithName('season_month', 'Gen', row)
+        system3.setRowDataWithName('week', 'Gen', row)
+        system3.setRowDataWithName('day', 'D', row)
+        system3.setRowDataWithName('topics', '', row)
+        
+        expected = []
+        system3.setRowDataWithName('type', 'OFF', expected)
+        system3.setRowDataWithName('part', 'PS', expected)
+        system3.setRowDataWithName('season_month', 'Gen', expected)
+        system3.setRowDataWithName('week', 'Gen', expected)
+        system3.setRowDataWithName('day', 'D', expected)
+        system3.setRowDataWithName('topics', '', expected)
+        
+        assert.deepEqual(system3.fillPart(row), expected)
+
     })
     
     
@@ -749,25 +841,25 @@ describe('tests System3', function() {
         assert(system3.getBookIdentifier('MISS3 abbot') === null)
     })
     
-    it('tests fillShelfmark', () => {
-        let rows = [
-            [, '10001'],
-            [, '10002'],
-            [, '10003'],
-        ]
-        
-        rowsExpected = [
-            [, '1'],
-            [, '2'],
-            [, '3'],
-        ]
-        
-        system3.hasShelfmarkColumn = true
-        
-        assert.deepEqual(system3.fillShelfmark(rows, null), rowsExpected)
-        
-        
-    })
+    // it('tests fillShelfmark', () => {
+    //     let rows = [
+    //         [, '10001'],
+    //         [, '10002'],
+    //         [, '10003'],
+    //     ]
+    //
+    //     rowsExpected = [
+    //         [, '1'],
+    //         [, '2'],
+    //         [, '3'],
+    //     ]
+    //
+    //     system3.hasShelfmarkColumn = true
+    //
+    //     assert.deepEqual(system3.fillShelfmark(rows, null), rowsExpected)
+    //
+    //
+    // })
     
 });
 
