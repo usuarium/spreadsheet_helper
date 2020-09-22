@@ -1051,7 +1051,7 @@ class System3
         }
         
         for (let topic of System3.iterableTopics(topics)) {
-            let topicsInfo = this.getTopicInfoWithLabel(topics)
+            let topicsInfo = this.getTopicInfoWithLabel(topic)
         
             if (topicsInfo === null) {
                 return new CellValidationError(`Topics not found: ${topic}`)
