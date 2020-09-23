@@ -399,7 +399,7 @@ class System3
                 'PS': ['Gen', 'Ep', 'Trin'],
                 'S': sanctoralValues,
                 'C': '',
-                'V': [...temporalValues, ...sanctoralValues]
+                'V': ['', ...temporalValues, ...sanctoralValues]
             }[dependentValues.part]
 
             return value === undefined ? null : value
@@ -418,12 +418,13 @@ class System3
             return value === undefined ? null : value
         }
         else if (fieldName === 'day') {
+            let temporalValues = ['D', 'ff', 'f2', 'f3', 'f4', 'f5', 'f6', 'S', 'Gen', 'F']
             let value = {
-                'T': ['D', 'ff', 'f2', 'f3', 'f4', 'f5', 'f6', 'S', 'Gen', 'F'],
-                'PS': ['Gen', 'D', 'ff', 'f2', 'f3', 'f4', 'f5', 'f6', 'S', 'Gen', 'F'],
+                'T': temporalValues,
+                'PS': temporalValues,
                 'S': new RegExp(/^([1-9]|[12]\d|3[01])$/),
                 'C': '',
-                'V': ['D', 'ff', 'f2', 'f3', 'f4', 'f5', 'f6', 'S', 'Gen', 'F']
+                'V': [...temporalValues, '']
             }[dependentValues.part]
 
             return value === undefined ? null : value
