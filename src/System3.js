@@ -1191,6 +1191,9 @@ class System3
         if (genre === 'HV') {
             this.setRowDataWithName('genre', 'H', row)
         }
+        if (genre === 'LitV') {
+            this.setRowDataWithName('genre', 'Lit', row)
+        }
 
         let week = this.getRowDataWithName('week', row)
         if (week === 'HH') {
