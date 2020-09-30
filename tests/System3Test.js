@@ -120,18 +120,18 @@ describe('tests System3', function() {
         
         assert.deepEqual(system3.getValidValues('part', {type: 'MISS'}), ['T', 'S', 'C', 'V'])
         assert.deepEqual(system3.getValidValues('part', {type: 'OFF'}), ['PS', 'T', 'S', 'C', 'V'])
-        assert.deepEqual(system3.getValidValues('part', {type: 'RIT'}), ['O'])
+        assert.deepEqual(system3.getValidValues('part', {type: 'RIT'}), ['', 'O', 'T', 'S', 'V', 'C'])
         assert.deepEqual(system3.getValidValues('part', {type: 'invalid'}), null)
 
         assert.deepEqual(system3.getValidValues('season_month', {part: 'T'}), ['Adv', 'Nat', 'Ep', 'LXX', 'Qu', 'Pasc', 'Pent', 'Trin', 'Gen'])
         assert.deepEqual(system3.getValidValues('season_month', {part: 'S'}), ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
         assert.deepEqual(system3.getValidValues('season_month', {part: 'C'}), '')
-        assert.deepEqual(system3.getValidValues('season_month', {part: 'V'}), '')
+        assert.deepEqual(system3.getValidValues('season_month', {part: 'V'}), ['', 'Adv', 'Nat', 'Ep', 'LXX', 'Qu', 'Pasc', 'Pent', 'Trin', 'Gen', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
 
         assert.deepEqual(system3.getValidValues('week', {part: 'T'}), ['H0', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'H11', 'H12', 'H13', 'H14', 'H15', 'H16', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'H23', 'H24', 'H25', 'H26', 'H27', 'QuT', 'Gen'])
         assert.deepEqual(system3.getValidValues('week', {part: 'S'}), '')
         assert.deepEqual(system3.getValidValues('week', {part: 'C'}), '')
-        assert.deepEqual(system3.getValidValues('week', {part: 'V'}), '')
+        assert.deepEqual(system3.getValidValues('week', {part: 'V'}), ['H0', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'H11', 'H12', 'H13', 'H14', 'H15', 'H16', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'H23', 'H24', 'H25', 'H26', 'H27', 'QuT', 'Gen', ''])
 
         let regexp = system3.getValidValues('day', {part: 'S'})
         assert(regexp.constructor.name === 'RegExp')
@@ -139,13 +139,14 @@ describe('tests System3', function() {
             assert(regexp.exec(i))
         }
 
-        assert(regexp.exec(0) === null)
+        assert(regexp.exec(0))
+        assert(regexp.exec('02') === null)
         assert(regexp.exec(32) === null)
         assert(regexp.exec(100) === null)
         
         assert.deepEqual(system3.getValidValues('day', {part: 'T'}), ['D', 'ff', 'f2', 'f3', 'f4', 'f5', 'f6', 'S', 'Gen', 'F'])
         assert.deepEqual(system3.getValidValues('day', {part: 'C'}), '')
-        assert.deepEqual(system3.getValidValues('day', {part: 'V'}), '')
+        assert.deepEqual(system3.getValidValues('day', {part: 'V'}), ['D', 'ff', 'f2', 'f3', 'f4', 'f5', 'f6', 'S', 'Gen', 'F', ''])
         
         assert.deepEqual(system3.getValidValues('mass_hour', {type: 'MISS'}), ['', 'M1', 'M2', 'M3'])
         assert.deepEqual(system3.getValidValues('mass_hour', {type: 'OFF'}), ['V1', 'C1', 'M', 'N1', 'N2', 'N3', 'L', 'I', 'I+', 'III', 'VI', 'IX', 'V', 'V2', 'C', 'C2'])
@@ -236,9 +237,29 @@ describe('tests System3', function() {
         ]);
 
         assert.deepEqual(system3.getValidValues('genre', {type: 'RIT', layer: 'S/C'}), [
-            'F', 'Ex', 'Pf', 'Alloc', 'Lit', 'Abs', 'Ben',
+            // romana
+            'Or', 'Coll', 'Secr', 'Postcomm', 'Superpop', 'VD', 'Infracan', 'BenP',
+            // ambrosiana
+            'Litaniae', 'Super populum', 'Super sindonem', 'Super oblatam', 'Praefatio', 'Post communionem',
+            // mozarabica
+            'Oratio post officium', 'Missa', 'Alia oratio', 'Post nomina', 'Ad pacem', 
+            'Illatio', 'Post Sanctus', 'Post Pridie', 'Ad orationem dominicam', 'Benedictio', 'Post communionem',
+            // gallicana
+            'Praefatio', 'Collectio', 'Post prophetiam', 'Post precem', 'Post Aius', 
+            'Ante nomina', 'Super oblata', 'Post nomina', 'Ad pacem', 'Secreta', 'Contestatio', 
+            'Super munera', 'Immolatio', 'Post Sanctus', 'Post secreta', 'Post mysterium', 
+            'Ante orationem dominicam', 'Post orationem dominicam', 'Benedictio populi', 
+            'Post communionem', 'Post Eucharistiam', 'Consummatio missae', 'Consecratio',
+            
+            'Cap', 'Or',
+            
+            'F', 'Ex', 'Pf', 'Alloc', 'Lit', 'Abs', 'Ben', 'Or', 'VD'
         ]);
 
+        assert.deepEqual(system3.getValidValues('genre', {type: 'RIT', layer: 'R'}), [
+            'Rub'
+        ]);
+        
         assert.deepEqual(system3.getValidValues('genre', {type: 'RIT', layer: 'L'}), [
             // romana
             'Proph', 'ProphTrop', 'Lc', 'Ev', 'EvTrop',
@@ -844,37 +865,32 @@ describe('tests System3', function() {
         assert(system3.getBookIdentifier('MISS3 abbot') === null)
     })
     
-    it('tests validateRows', () => {
-        let rawString = `	1145		MISS	S	Jan		13		Hilarius Pictaviensis, Remigius, Agritius	Hilarius Pictaviensis, Remigius, Agritius	M2	Mass Propers		1	Sancti Hilarii Remigii et Agritii episcoporum. 	S/C	BenP		Ds qui es fundator fidei 	27				FMI`
-        let rawData = rawString.split("\n").map(r => r.split("\t"))
-        
-        system3.indexLabels = [
-            {
-                name: 'Mass Propers',
-            }
-        ]
-        
-        console.log(system3.validateRows(rawData))
-    })
-    
-    // it('tests fillShelfmark', () => {
-    //     let rows = [
-    //         [, '10001'],
-    //         [, '10002'],
-    //         [, '10003'],
+    // it('tests validateRows', () => {
+    //     let rawString = `    1145        MISS                        Dedicatio Ecclesiae, de patrono    Dedicatio Ecclesiae, de patrono    M2    Mass Propers        15    Item de eodem et de eo in cuius honore dedicata     S/C    BenP        Ops Ds qui hoc templum suo gloriosissimo     278                FMI`
+    //     let rawData = rawString.split("\n").map(r => r.split("\t"))
+    //
+    //     system3.indexLabels = [
+    //         {
+    //             name: 'Christmas Eve',
+    //         }
     //     ]
     //
-    //     rowsExpected = [
-    //         [, '1'],
-    //         [, '2'],
-    //         [, '3'],
+    //     system3.topics = [
+    //         {
+    //             "id": 416,
+    //             "name": "Dedicatio Ecclesiae",
+    //             "kind": 2, // C
+    //             "votive": false
+    //         },
+    //         {
+    //             "id": 416,
+    //             "name": "de patrono",
+    //             "kind": null,
+    //             "votive": true
+    //         }
     //     ]
     //
-    //     system3.hasShelfmarkColumn = true
-    //
-    //     assert.deepEqual(system3.fillShelfmark(rows, null), rowsExpected)
-    //
-    //
+    //     console.log(system3.validateRows(rawData))
     // })
     
 });

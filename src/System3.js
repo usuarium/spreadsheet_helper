@@ -380,12 +380,12 @@ class System3
         else if (fieldName === 'part') {
             let missValues = ['T', 'S', 'C', 'V']
             let offValues = ['PS', 'T', 'S', 'C', 'V']
-            let ritValue = ['O']
+            let ritValue = ['', 'O', 'T', 'S', 'V', 'C']
             
             let value = {
-                'RIT': ritValue,
                 'MISS': missValues,
                 'OFF': offValues,
+                'RIT': ritValue,
             }[dependentValues.type]
             
             return value === undefined ? null : value
@@ -393,13 +393,15 @@ class System3
         else if (fieldName === 'season_month') {
             let temporalValues = ['Adv', 'Nat', 'Ep', 'LXX', 'Qu', 'Pasc', 'Pent', 'Trin', 'Gen']
             let sanctoralValues = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+            let psValues = ['Gen', 'Ep', 'Trin']
             
             let value = {
                 'T': temporalValues,
-                'PS': ['Gen', 'Ep', 'Trin'],
+                'PS': psValues,
                 'S': sanctoralValues,
                 'C': '',
-                'V': ['', ...temporalValues, ...sanctoralValues]
+                'V': ['', ...temporalValues, ...sanctoralValues],
+                'O': ['']
             }[dependentValues.part]
 
             return value === undefined ? null : value
@@ -412,7 +414,8 @@ class System3
                 'PS': 'Gen',
                 'S': '',
                 'C': '',
-                'V': [...temporalValues, '']
+                'V': [...temporalValues, ''],
+                'O': ['']
             }[dependentValues.part]
 
             return value === undefined ? null : value
@@ -422,9 +425,10 @@ class System3
             let value = {
                 'T': temporalValues,
                 'PS': temporalValues,
-                'S': new RegExp(/^([1-9]|[12]\d|3[01])$/),
+                'S': new RegExp(/^([0-9]|[12]\d|3[01])$/),
                 'C': '',
-                'V': [...temporalValues, '']
+                'V': [...temporalValues, ''],
+                'O': ['']
             }[dependentValues.part]
 
             return value === undefined ? null : value
@@ -469,6 +473,26 @@ class System3
     }
     
     getAllGenres() {
+        let missSC = [
+            // romana
+            'Or', 'Coll', 'Secr', 'Postcomm', 'Superpop', 'VD', 'Infracan', 'BenP',
+            // ambrosiana
+            'Litaniae', 'Super populum', 'Super sindonem', 'Super oblatam', 'Praefatio', 'Post communionem',
+            // mozarabica
+            'Oratio post officium', 'Missa', 'Alia oratio', 'Post nomina', 'Ad pacem', 
+            'Illatio', 'Post Sanctus', 'Post Pridie', 'Ad orationem dominicam', 'Benedictio', 'Post communionem',
+            // gallicana
+            'Praefatio', 'Collectio', 'Post prophetiam', 'Post precem', 'Post Aius', 
+            'Ante nomina', 'Super oblata', 'Post nomina', 'Ad pacem', 'Secreta', 'Contestatio', 
+            'Super munera', 'Immolatio', 'Post Sanctus', 'Post secreta', 'Post mysterium', 
+            'Ante orationem dominicam', 'Post orationem dominicam', 'Benedictio populi', 
+            'Post communionem', 'Post Eucharistiam', 'Consummatio missae', 'Consecratio',
+        ]
+        
+        let offSC = [
+            'Cap', 'Or',
+        ]
+        
         let possibleValues = {
             'MISS': {
                 'G/A': [
@@ -493,21 +517,7 @@ class System3
                     // gallicana
                     'Lectio', 'Epistola', 'Evangelium',
                 ],
-                'S/C': [
-                    // romana
-                    'Or', 'Coll', 'Secr', 'Postcomm', 'Superpop', 'VD', 'Infracan', 'BenP',
-                    // ambrosiana
-                    'Litaniae', 'Super populum', 'Super sindonem', 'Super oblatam', 'Praefatio', 'Post communionem',
-                    // mozarabica
-                    'Oratio post officium', 'Missa', 'Alia oratio', 'Post nomina', 'Ad pacem', 
-                    'Illatio', 'Post Sanctus', 'Post Pridie', 'Ad orationem dominicam', 'Benedictio', 'Post communionem',
-                    // gallicana
-                    'Praefatio', 'Collectio', 'Post prophetiam', 'Post precem', 'Post Aius', 
-                    'Ante nomina', 'Super oblata', 'Post nomina', 'Ad pacem', 'Secreta', 'Contestatio', 
-                    'Super munera', 'Immolatio', 'Post Sanctus', 'Post secreta', 'Post mysterium', 
-                    'Ante orationem dominicam', 'Post orationem dominicam', 'Benedictio populi', 
-                    'Post communionem', 'Post Eucharistiam', 'Consummatio missae', 'Consecratio',
-                ],
+                'S/C': missSC,
                 'R': ['Rub']
             },
             'OFF': {
@@ -518,16 +528,14 @@ class System3
                 'L': [
                     'Lec', 'Ser', 'Leg', 'Ev', 'Hom',
                 ],
-                'S/C': [
-                    'Cap', 'Or',
-                ],
+                'S/C': offSC,
                 'R': ['Rub']
             },
             'RIT': {
                 'G/A': [],
                 'L': [],
                 'S/C': [
-                    'F', 'Ex', 'Pf', 'Alloc', 'Lit', 'Abs', 'Ben',
+                    ...missSC, ...offSC, ...['F', 'Ex', 'Pf', 'Alloc', 'Lit', 'Abs', 'Ben', 'Or', 'VD']
                 ],
                 'R': ['Rub']
             }
@@ -651,7 +659,6 @@ class System3
     
     validate() {
         this.loadSheetData()
-        Logger.log(this.data.length)
         return this.validateRows(this.data)
     }
     
@@ -668,8 +675,6 @@ class System3
                 }
             }
         }
-        
-        Logger.log(errors)
         
         return errors
     }
@@ -943,7 +948,11 @@ class System3
                 return true
             }
             
-            return new CellValidationError('Part is required')
+            if (type !== 'RIT') {
+                return new CellValidationError('Part is required')
+            }
+            
+            return true
         }
         
         let valids = this.getValidValues('part', {type: type})
@@ -956,6 +965,7 @@ class System3
     }
     
     validateSeasonMonth(row) {
+        let type = this.getRowDataWithName('type', row)
         let seasonMonth = this.getRowDataWithName('season_month', row)
         let part = this.getRowDataWithName('part', row)
         let genre = this.getRowDataWithName('genre', row)
@@ -965,7 +975,11 @@ class System3
                 return true
             }
 
-            return new CellValidationError('Part is missing for Season/Month')
+            if (type !== 'RIT') {
+                return new CellValidationError('Part is missing for Season/Month')
+            }
+            
+            return true
         }
         
         let validSeasonMonth = this.getValidValues('season_month', {part: part})
@@ -982,6 +996,7 @@ class System3
     }
     
     validateWeek(row) {
+        let type = this.getRowDataWithName('type', row)
         let week = this.getRowDataWithName('week', row)
         let part = this.getRowDataWithName('part', row)
         let genre = this.getRowDataWithName('genre', row)
@@ -991,7 +1006,11 @@ class System3
                 return true
             }
 
-            return new CellValidationError('Part is missing for Week')
+            if (type !== 'RIT') {
+                return new CellValidationError('Part is missing for Week')
+            }
+            
+            return true
         }
         
         let validWeek = this.getValidValues('week', {part: part})
@@ -1008,6 +1027,7 @@ class System3
     }
     
     validateDay(row) {
+        let type = this.getRowDataWithName('type', row)
         let day = this.getRowDataWithName('day', row)
         let part = this.getRowDataWithName('part', row)
         let genre = this.getRowDataWithName('genre', row)
@@ -1017,7 +1037,11 @@ class System3
                 return true
             }
 
-            return new CellValidationError('Part is missing for Day')
+            if (type !== 'RIT') {
+                return new CellValidationError('Part is missing for Day')
+            }
+            
+            return true
         }
         
         let validDay = this.getValidValues('day', {part: part})
@@ -1271,7 +1295,23 @@ class System3
         let type = this.getRowDataWithName('type', row)
 
         if (type === 'MISS') {
-            row[this.getIndexWithFieldName('ceremony')] = 'Mass Propers'
+            let genre = this.getRowDataWithName('genre', row)
+        
+            if (genre === 'F') {
+                row[this.getIndexWithFieldName('ceremony')] = 'Mass ordinary'
+                row[this.getIndexWithFieldName('type')] = 'RIT'
+                row[this.getIndexWithFieldName('part')] = ''
+                row[this.getIndexWithFieldName('season_month')] = ''
+                row[this.getIndexWithFieldName('week')] = ''
+                row[this.getIndexWithFieldName('day')] = ''
+                row[this.getIndexWithFieldName('topics')] = ''
+                row[this.getIndexWithFieldName('mass_hour')] = ''
+                row[this.getIndexWithFieldName('layer')] = 'S/C'
+                return row
+            }
+            else {
+                row[this.getIndexWithFieldName('ceremony')] = 'Mass Propers'
+            }
         }
         else if (type === 'OFF') {
             row[this.getIndexWithFieldName('ceremony')] = 'Office Propers'
@@ -1427,9 +1467,17 @@ class System3
         return row
     }
     
-    calcualtePart(type, seasonMonth, week, day, topic) {
+    calcualtePart(type, seasonMonth, week, day, topics, ceremony) {
         if (typeof day === 'number') {
             day = day.toString()
+        }
+        
+        if (type === 'RIT') {
+            if (ceremony === 'Mass ordinary'
+                || ceremony === 'preparation and vesting for Mass'
+                || ceremony === 'thanksgiving after Mass') {
+                    return 'O'
+                }
         }
         
         if (seasonMonth === 'Gen') {
@@ -1469,19 +1517,19 @@ class System3
             }
         }
         else if (week.length === 0 && seasonMonth.length === 0 && day.length === 0) {
-            if (topic.length > 0) {
-                let topicInfo = this.getTopicInfoWithLabel(topic)
-            
-                if (topicInfo !== null) {
-                    if (topicInfo.kind === 1) {
-                        part = 'C'
+            if (topics.length > 0) {
+                
+                for (let topic of System3.iterableTopics(topics)) {
+                    let topicInfo = this.getTopicInfoWithLabel(topic)
+        
+                    if (topicInfo !== null) {
+                        if (topicInfo.kind === 1 && part !== 'V') {
+                            part = 'C'
+                        }
+                        else if (topicInfo.votive) {
+                            part = 'V'
+                        }
                     }
-                    else if (topicInfo.votive) {
-                        part = 'V'
-                    }
-                }
-                else {
-                    part = ''
                 }
             }
             else {
@@ -1507,7 +1555,7 @@ class System3
                 validCount++
             }
             
-            if (topic.length === 0) {
+            if (topics.length === 0) {
                 validCount++
             }
             
@@ -1525,8 +1573,9 @@ class System3
         let week = this.getRowDataWithName('week', row)
         let day = this.getRowDataWithName('day', row)
         let topic = this.getRowDataWithName('topics', row)
+        let ceremony = this.getRowDataWithName('ceremony', row)
         
-        let part = this.calcualtePart(type, seasonMonth, week, day, topic)
+        let part = this.calcualtePart(type, seasonMonth, week, day, topic, ceremony)
         
         if (part === false) {
             return false
