@@ -4,28 +4,28 @@ currentId=$(git rev-parse --short HEAD)
 
 cat src/main.js | sed "s/let version = 'DEV'/let version = '${currentId}'/" > tmp && mv tmp src/main.js
 
-id=$1
-length=$(cat document_ids.json | jq '.document_ids | length')
+ids=$1
 
-for index in $(seq 0 $(( $length - 1)))
+if [ -z "$1" ]
+then
+    echo "Id argument missing."
+    exit 1
+fi
+
+if [ "$ids" = "all" ]
+then
+    ids=$(ls config/clasp/clasp_*.json | sed 's/^.*clasp_\(.*\).json/\1/')
+fi
+
+for id in $ids
 do
-	shelfmark=$(cat document_ids.json | jq ".document_ids[$index].shelfmark" | tr -d '"')
-	if [ "$id" != "all" ] && [ "$id" = "$shelfmark" ] || [ "$id" = "all" ]
-	then
-		documentid=$(cat document_ids.json | jq ".document_ids[$index].document_id")
-		
-		echo "{\"scriptId\":$documentid,\"rootDir\":\"src\"}" > .clasp.json
-
-		echo "deploy $documentid as $shelfmark"
-		npm run-script upload
-		
-		if [ "$id" != "all" ]
-		then
-			break
-		else
-			sleep 1
-		fi
-	fi
+    if [ ! -f "config/clasp/clasp_$id.json" ]
+    then
+        echo "Config not found for id: $id"
+        exit 1
+    fi
+    
+    cp config/clasp/clasp_$id.json .clasp.json
+    echo "deploy $id"
+    npm run-script upload
 done
-
-cat src/main.js | sed "s/let version = '${currentId}'/let version = 'DEV'/" > tmp && mv tmp src/main.js
