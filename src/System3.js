@@ -1423,7 +1423,6 @@ class System3
         }
         
         let rubrics = this.getRowDataWithName('rubrics', row)
-        
         if (rubrics.length === 0) {
             return false
         }
@@ -1813,6 +1812,7 @@ class System3
     fillTopics(row) {
         let feast = this.getRowDataWithName('feast', row)
         let commune_votive = this.getRowDataWithName('commune_votive', row)
+        let topics = this.getRowDataWithName('topics', row)
         
         let newValue = ''
         if (feast.length > 0) {
@@ -1822,8 +1822,10 @@ class System3
         if (commune_votive.length > 0) {
             newValue = commune_votive
         }
-        
-        this.setRowDataWithName('topics', newValue, row)
+
+        if (newValue.length > 0 && topics.length === 0) {
+            this.setRowDataWithName('topics', newValue, row)
+        }
         
         return row
     }
