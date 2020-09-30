@@ -613,24 +613,23 @@ describe('tests System3', function() {
         sheetWrapperMock.verify()
         sheetWrapperMock.restore()
     })
-    
+
     it('tests Gen is empty', () => {
         let rawString = '	748		MISS	T	Qu	Gen	Gen		Corp	Corp	M2	Mass Propers		1	Officium de Corpore Christi a LXX usque ad Pascha.	G/A	Intr		Panem caeli dedit nobis	376	151v			KK'
         let rawData = rawString.split("\n").map(r => r.split("\t"))
 
         let rawResultString = '	748		MISS	V	Qu	Gen	Gen		Corp	Corp	M2	Mass Propers		1	Officium de Corpore Christi a LXX usque ad Pascha.	G/A	Intr		Panem caeli dedit nobis	376	151v			KK'
         let resultData = rawResultString.split("\n").map(r => r.split("\t"))
-        
+
         let sheetWrapperMock = sinon.mock(system3.sheetWrapper)
         sheetWrapperMock.expects('getDataRows').atLeast(1).returns(rawData)
         sheetWrapperMock.expects('setValuesAt').atLeast(1).withArgs(resultData, {row: 2, col: 1, rows: 1, cols: 25})
-        
-        system3.fillEmptyFields(false)
+
+        system3.fillEmptyFields()
         assert.deepEqual(system3.data, resultData)
-        
+
         sheetWrapperMock.verify()
         sheetWrapperMock.restore()
-        
     })
     
     it ('tests calcualtePart', () => {
@@ -776,7 +775,19 @@ describe('tests System3', function() {
         expected = []
         system3.setRowDataWithName('feast', '', expected)
         system3.setRowDataWithName('commune_votive', '', expected)
-        system3.setRowDataWithName('topics', '', expected)
+        
+        assert.deepEqual(system3.fillTopics(row), expected)
+
+
+        row = []
+        system3.setRowDataWithName('feast', '', row)
+        system3.setRowDataWithName('commune_votive', '', row)
+        system3.setRowDataWithName('topics', 'abc123', row)
+        
+        expected = []
+        system3.setRowDataWithName('feast', '', expected)
+        system3.setRowDataWithName('commune_votive', '', expected)
+        system3.setRowDataWithName('topics', 'abc123', expected)
         
         assert.deepEqual(system3.fillTopics(row), expected)
     })
@@ -866,31 +877,25 @@ describe('tests System3', function() {
     })
     
     // it('tests validateRows', () => {
-    //     let rawString = `    1145        MISS                        Dedicatio Ecclesiae, de patrono    Dedicatio Ecclesiae, de patrono    M2    Mass Propers        15    Item de eodem et de eo in cuius honore dedicata     S/C    BenP        Ops Ds qui hoc templum suo gloriosissimo     278                FMI`
+    //     let rawString = `    884        MISS                            pro abbate    M2    Mass Propers        1    Missa pro abbate. Missa pro abbate    S/C    Coll        Concede quaesumus Domine famulo tuo N ut praedicando et exercendo ... piissimo pastore percipiat.    118    58v            SÁ`
     //     let rawData = rawString.split("\n").map(r => r.split("\t"))
     //
     //     system3.indexLabels = [
     //         {
-    //             name: 'Christmas Eve',
+    //             name: 'Mass Propers',
     //         }
     //     ]
     //
     //     system3.topics = [
     //         {
-    //             "id": 416,
-    //             "name": "Dedicatio Ecclesiae",
-    //             "kind": 2, // C
-    //             "votive": false
-    //         },
-    //         {
-    //             "id": 416,
-    //             "name": "de patrono",
-    //             "kind": null,
+    //             "id": 1,
+    //             "name": "pro abbate",
+    //             "kind": null, // C
     //             "votive": true
-    //         }
+    //         },
     //     ]
     //
-    //     console.log(system3.validateRows(rawData))
+    //     console.log(system3.fillEmptyFieldsInRow(rawData[0]))
     // })
     
     it('tests fillShelfmark', () => {
