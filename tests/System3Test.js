@@ -893,5 +893,31 @@ describe('tests System3', function() {
     //     console.log(system3.validateRows(rawData))
     // })
     
+    it('tests fillShelfmark', () => {
+        let row = []
+        
+        system3.topics = [
+            {
+                "id": 416,
+                "name": "Dedicatio Ecclesiae",
+                "kind": 2, // C
+                "votive": false
+            },
+            {
+                "id": 416,
+                "name": "de patrono",
+                "kind": null,
+                "votive": true
+            }
+        ]
+        
+        system3.setRowDataWithName('topics', 'DE patrono, dedicatio ecclesiae', row)
+        
+        rowExpected = []
+        system3.setRowDataWithName('topics', 'de patrono, Dedicatio Ecclesiae', rowExpected)
+
+        system3.autofixCaseSensitivity(row)
+        assert.deepEqual(row, rowExpected)
+    })
 });
 

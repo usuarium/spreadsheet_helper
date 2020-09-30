@@ -1186,7 +1186,191 @@ class System3
         this.writeData()
     }
     
+    autofixes(row) {
+        let genre = this.getRowDataWithName('genre', row)
+        if (genre === 'HV') {
+            this.setRowDataWithName('genre', 'H', row)
+        }
+
+        let week = this.getRowDataWithName('week', row)
+        if (week === 'HH') {
+            this.setRowDataWithName('genre', 'Gen', row)
+        }
+
+        let seasonMonth = this.getRowDataWithName('season_month', row)
+        if (seasonMonth === 'Ian') {
+            this.setRowDataWithName('season_month', 'Jan', row)
+        }
+
+        let feast = this.getRowDataWithName('feast', row)
+        if (feast === 'Innoc.mm') {
+            this.setRowDataWithName('feast', 'Innocentes', row)
+        }
+        if (feast === 'Thomas.m') {
+            this.setRowDataWithName('feast', 'Thomas martyr', row)
+        }
+
+        this.autofixCaseSensitivity(row)
+        this.autofixFeast(row)
+        this.autofixTopics(row)
+        
+        return row
+    }
+    
+    static newFeastName(feast) {
+        let feasts = {
+            'Vig.Nat': 'Nativitas (Vigilia)',
+            'Nat': 'Nativitas',
+            'Die2.Nat': 'Nativitas (Die 2)',
+            'Die3.Nat': 'Nativitas (Die 3)',
+            'Die4.Nat': 'Nativitas (Die 4)',
+            'Die5.Nat': 'Nativitas (Die 5)',
+            'Die6.Nat': 'Nativitas (Die 6)',
+            'Die7.Nat': 'Nativitas (Die 7)',
+            'Steph.m': 'Stephanus martyr',
+            'Oct.Steph.m': 'Stephanus martyr (Octava)',
+            'Steph.m (Adventus costae)': 'Stephanus martyr (Adventus costae)',
+            'Steph.m (Adventus reliquiarum)': 'Stephanus martyr (Adventus reliquiarum)',
+            'Steph.m (Ded altaris)': 'Stephanus martyr (Dedicatio altaris)',
+            'Steph.m (Inventio Octava)': 'Stephanus martyr (Inventio Octava)',
+            'Steph.m (Inventio)': 'Stephanus martyr (Inventio)',
+            'Steph.m (Translatio Octava)': 'Stephanus martyr (Translatio Octava)',
+            'Steph.m (Translatio)': 'Stephanus martyr (Translatio)',
+            'Ioan.ap': 'Ioannes apostolus',
+            'Ioan.ap (ante Portam Latinam Octava)': 'Ioannes apostolus (ante Portam Latinam Octava)',
+            'Ioan.ap (ante Portam Latinam)': 'Ioannes apostolus (ante Portam Latinam)',
+            'Ioan.ap (Commemoratio)': 'Ioannes apostolus (Commemoratio)',
+            'Ioan.ap (Octava)': 'Ioannes apostolus (Octava)',
+            'Ioan.ap (Vigilia)': 'Ioannes apostolus (Vigilia)',
+            'Oct.Ioan.ap': 'Ioannes apostolus (Octava)',
+            'Innoc.mm': 'Innocentes',
+            'Oct.Innoc.mm': 'Innocentes (Octava)',
+            'Circ': 'Circumcisio',
+            'Circ (Vigilia)': 'Circumcisio (Vigilia)',
+            'Vig.Ep': 'Epiphania (Vigilia)',
+            'Ep': 'Epiphania',
+            'Die2.Ep': 'Epiphania (Die 2)',
+            'Die3.Ep': 'Epiphania (Die 3)',
+            'Die4.Ep': 'Epiphania (Die 4)',
+            'Die5.Ep': 'Epiphania (Die 5)',
+            'Die6.Ep': 'Epiphania (Die 6)',
+            'Die7.Ep': 'Epiphania (Die 7)',
+            'Oct.Ep (Vigilia)': 'Epiphania (Octava Vigilia)',
+            'Oct.Ep': 'Epiphania (Octava)',
+            'Thomas.m': 'Thomas martyr',
+            'Transl.Iacobus.ap': 'Iacobus maior (Translatio)',
+            'Silvester.cf': 'Silvester papa',
+            'Columba.m': 'Columba',
+            'D70': 'Septuagesima',
+            'D60': 'Sexagesima',
+            'D50': 'Quinquagesima',
+            'Cin': 'Cinerum',
+            'Pasc': 'Resurrectio Domini',
+            'Pasc.annotinum': 'Pascha annotinum',
+            'D.prop': 'Dominica propria',
+            'Rogat': 'Rogationes',
+            'Vig.Asc': 'Ascensio Domini (Vigilia)',
+            'Asc': 'Ascensio Domini',
+            'Oct.Asc': 'Ascensio Domini (Octava)',
+            'Vig.Pent': 'Pentecostes (Vigilia)',
+            'Pent': 'Pentecostes',
+            'Oct.Pent': 'Pentecostes (Octava)',
+            'Trin': 'Trinitas',
+            'Oct.Trin': 'Trinitas (Octava)',
+            'Vig.Corp': 'Corpus Christi (Vigilia)',
+            'Corp': 'Corpus Christi',
+            'Die2.Corp': 'Corpus Christi (Die 2)',
+            'Die3.Corp': 'Corpus Christi (Die 3)',
+            'Die4.Corp': 'Corpus Christi (Die 4)',
+            'Die5.Corp': 'Corpus Christi (Die 5)',
+            'Die6.Corp': 'Corpus Christi (Die 6)',
+            'Die7.Corp': 'Corpus Christi (Die 7)',
+            'Oct.Corp': 'Corpus Christi (Octava)',
+        }
+        
+        if (feasts[feast] !== undefined && feasts[feast].length > 0) {
+            return feasts[feast]
+        }
+        
+        return null
+    }
+    
+    autofixFeast(row) {
+        let feast = this.getRowDataWithName('feast', row)
+        
+        if (feast.length === 0) {
+            return
+        }
+        
+        let newFeast = System3.newFeastName(feast)
+        if (newFeast !== null) {
+            this.setRowDataWithName('feast', newFeast, row)
+        }
+    }
+    
+    autofixTopics(row) {
+        let changedTopicsBuffer = []
+        
+        let topics = this.getRowDataWithName('topics', row)
+        if (topics.length === 0) {
+            return
+        }
+        
+        for (let topic of System3.iterableTopics(topics)) {
+            let newFeast = System3.newFeastName(topic)
+        
+            if (newFeast !== null) {
+                changedTopicsBuffer.push(newFeast)
+            }
+            else {
+                changedTopicsBuffer.push(topic)
+            }
+        }
+        
+        let newTopic = changedTopicsBuffer.join(', ')
+        
+        if (newTopic === topics) {
+            return
+        }
+        
+        this.setRowDataWithName('topics', newTopic, row)
+    }
+    
+    autofixCaseSensitivity(row) {
+        let topics = this.getRowDataWithName('topics', row)
+        if (topics.length === 0) {
+            return
+        }
+
+        let topicBuffer = []
+
+        for (let topic of System3.iterableTopics(topics)) {
+            let lowerTopic = topic.toLowerCase()
+            
+            let found = false
+            for (let topicInfo of this.topics) {
+                if (topicInfo.name.toLowerCase() === lowerTopic) {
+                    topicBuffer.push(topicInfo.name)
+                    found = true
+                    break
+                }
+            }
+            
+            if (found === false) {
+                topicBuffer.push(topic)
+            }
+        }
+        
+        let newTopic = topicBuffer.join(', ')
+        
+        if (topics !== newTopic) {
+            this.setRowDataWithName('topics', newTopic, row)
+        }
+    }
+    
     fillEmptyFieldsInRow(row) {
+        row = this.autofixes(row)
+        
         // genre
         row = this.fillGenre(row)
         if (row === false) {
