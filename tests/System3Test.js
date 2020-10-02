@@ -898,7 +898,7 @@ describe('tests System3', function() {
     //     console.log(system3.fillEmptyFieldsInRow(rawData[0]))
     // })
     
-    it('tests fillShelfmark', () => {
+    it('tests autofixCaseSensitiveInTopics', () => {
         let row = []
         
         system3.topics = [
@@ -921,8 +921,15 @@ describe('tests System3', function() {
         rowExpected = []
         system3.setRowDataWithName('topics', 'de patrono, Dedicatio Ecclesiae', rowExpected)
 
-        system3.autofixCaseSensitivity(row)
+        system3.autofixCaseSensitiveInTopics(row)
         assert.deepEqual(row, rowExpected)
+    })
+    
+    it('tests autofixTrim', () => {
+        let row = [' 1', ' 2 ', '', 1, null]
+        
+        system3.autofixTrim(row)
+        assert.deepEqual(row, ['1', '2', '', 1, null])
     })
 });
 

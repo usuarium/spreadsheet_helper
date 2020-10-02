@@ -63,4 +63,45 @@ class SheetWrapper
 
         return sheet.getRange(2, column, dataRange.getLastRow()-1, 1).getValues();
     }
+    
+    getActiveRowsCount() {
+        let sheet = SpreadsheetApp.getActiveSheet();
+        let activeRange = sheet.getActiveRange()
+        
+        if (activeRange === null) {
+            return 0
+        }
+        
+        return activeRange.getNumRows()
+    }
+    
+    getFirstSelectedRow() {
+        let sheet = SpreadsheetApp.getActiveSheet();
+        let activeRange = sheet.getActiveRange()
+
+        if (activeRange === null) {
+            return 0
+        }
+        
+        return activeRange.getLastRow() - (activeRange.getNumRows() - 1)
+    }
+
+    getLastSelectedRow() {
+        let sheet = SpreadsheetApp.getActiveSheet();
+        let activeRange = sheet.getActiveRange()
+
+        if (activeRange === null) {
+            return 0
+        }
+        
+        return activeRange.getLastRow()
+    }
+    
+    highlightRowsAt(rows) {
+        let sheet = SpreadsheetApp.getActiveSheet()
+        let numberOfColumns = sheet.getDataRange().getLastColumn()
+        for (let row of rows) {
+            sheet.getRange(row, 1, 1, numberOfColumns).setBackground('#e6b8af')
+        }
+    }
 }

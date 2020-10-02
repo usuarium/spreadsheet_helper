@@ -526,7 +526,7 @@ class System3
                     'Rb', 'RbV', 'H', 'Ps', 'CantVT', 'CantNT', 'W', 'WSac',
                 ],
                 'L': [
-                    'Lec', 'Ser', 'Leg', 'Ev', 'Hom',
+                    'Lec', 'Ser', 'Leg', 'Ev', 'Hom', 
                 ],
                 'S/C': offSC,
                 'R': ['Rub']
@@ -659,12 +659,36 @@ class System3
     
     validate() {
         this.loadSheetData()
-        return this.validateRows(this.data)
+        let errors = this.validateRows(this.data)
+        
+        if (errors.length > 0) {
+            let rows = []
+            for (let error of errors) {
+                rows.push(error.errorObject.row)
+            }
+            this.sheetWrapper.highlightRowsAt(rows)
+        }
+        
+        return errors
     }
     
     validateRows(rows) {
         let errors = []
+        
+        let checkSubset = this.sheetWrapper.getActiveRowsCount() > 1
+        let firstRowIndex = 0
+        let lastRowIndex = 0
+        
+        if (checkSubset === true) {
+            firstRowIndex = this.sheetWrapper.getFirstSelectedRow() - 2
+            lastRowIndex = this.sheetWrapper.getLastSelectedRow() - 2
+        }
+        
         for (let rowIndex in rows) {
+            if (checkSubset && (rowIndex < firstRowIndex || rowIndex > lastRowIndex)) {
+                continue
+            }
+            
             let row = rows[rowIndex]
             let rowErrors = this.validateRow(row)
             
@@ -707,6 +731,11 @@ class System3
     validateRow(row) {
         let errors = []
         let result = null
+        
+        let remark = this.getRowDataWithName('remark', row)
+        if (remark === 'del') {
+            return errors // skip
+        }
         
         result = this.validateDigitalPageNumber(row)
         if (result !== true) {
@@ -815,6 +844,10 @@ class System3
         let item = this.getRowDataWithName('item', row)
         let rubrics = this.getRowDataWithName('rubrics', row)
         
+        if (item === '-') {
+            item = ''
+        }
+        
         if (item.length === 0 && rubrics.length === 0) {
             return new CellValidationError('Either Rubric or Item is required')
         }
@@ -825,9 +858,14 @@ class System3
     // ok
     validateGenre(row) {
         let genre = this.getRowDataWithName('genre', row)
+        let item = this.getRowDataWithName('item', row)
         
         if (genre.length === 0) {
             return new CellValidationError('Genre is required')
+        }
+        
+        if (item.length > 0 && genre === 'Rub') {
+            return new CellValidationError('Invalid Genre')
         }
         
         let type = this.getRowDataWithName('type', row)
@@ -1168,8 +1206,21 @@ class System3
      */
     fillEmptyFields() {
         this.loadSheetData()
+        
+        let checkSubset = this.sheetWrapper.getActiveRowsCount() > 1
+        let firstRowIndex = 0
+        let lastRowIndex = 0
+        
+        if (checkSubset === true) {
+            firstRowIndex = this.sheetWrapper.getFirstSelectedRow() - 2
+            lastRowIndex = this.sheetWrapper.getLastSelectedRow() - 2
+        }
 
         for (let index in this.data) {
+            if (checkSubset && (index < firstRowIndex || index > lastRowIndex)) {
+                continue
+            }
+
             let row = this.data[index]
             
             row = this.fillEmptyFieldsInRow(row)
@@ -1181,197 +1232,20 @@ class System3
             this.data[index] = row
         }
         
-        this.fillSequence(this.data)
-        this.fillSeries(this.data)
+        if (checkSubset === false) {
+            this.fillSequence(this.data)
+            this.fillSeries(this.data)
+        }
         this.writeData()
     }
     
-    autofixes(row) {
-        let genre = this.getRowDataWithName('genre', row)
-        if (genre === 'HV') {
-            this.setRowDataWithName('genre', 'H', row)
-        }
-        if (genre === 'LitV') {
-            this.setRowDataWithName('genre', 'Lit', row)
-        }
-
-        let week = this.getRowDataWithName('week', row)
-        if (week === 'HH') {
-            this.setRowDataWithName('genre', 'Gen', row)
-        }
-
-        let seasonMonth = this.getRowDataWithName('season_month', row)
-        if (seasonMonth === 'Ian') {
-            this.setRowDataWithName('season_month', 'Jan', row)
-        }
-
-        let feast = this.getRowDataWithName('feast', row)
-        if (feast === 'Innoc.mm') {
-            this.setRowDataWithName('feast', 'Innocentes', row)
-        }
-        if (feast === 'Thomas.m') {
-            this.setRowDataWithName('feast', 'Thomas martyr', row)
-        }
-
-        this.autofixCaseSensitivity(row)
-        this.autofixFeast(row)
-        this.autofixTopics(row)
-        
-        return row
-    }
-    
-    static newFeastName(feast) {
-        let feasts = {
-            'Vig.Nat': 'Nativitas (Vigilia)',
-            'Nat': 'Nativitas',
-            'Die2.Nat': 'Nativitas (Die 2)',
-            'Die3.Nat': 'Nativitas (Die 3)',
-            'Die4.Nat': 'Nativitas (Die 4)',
-            'Die5.Nat': 'Nativitas (Die 5)',
-            'Die6.Nat': 'Nativitas (Die 6)',
-            'Die7.Nat': 'Nativitas (Die 7)',
-            'Steph.m': 'Stephanus martyr',
-            'Oct.Steph.m': 'Stephanus martyr (Octava)',
-            'Steph.m (Adventus costae)': 'Stephanus martyr (Adventus costae)',
-            'Steph.m (Adventus reliquiarum)': 'Stephanus martyr (Adventus reliquiarum)',
-            'Steph.m (Ded altaris)': 'Stephanus martyr (Dedicatio altaris)',
-            'Steph.m (Inventio Octava)': 'Stephanus martyr (Inventio Octava)',
-            'Steph.m (Inventio)': 'Stephanus martyr (Inventio)',
-            'Steph.m (Translatio Octava)': 'Stephanus martyr (Translatio Octava)',
-            'Steph.m (Translatio)': 'Stephanus martyr (Translatio)',
-            'Ioan.ap': 'Ioannes apostolus',
-            'Ioan.ap (ante Portam Latinam Octava)': 'Ioannes apostolus (ante Portam Latinam Octava)',
-            'Ioan.ap (ante Portam Latinam)': 'Ioannes apostolus (ante Portam Latinam)',
-            'Ioan.ap (Commemoratio)': 'Ioannes apostolus (Commemoratio)',
-            'Ioan.ap (Octava)': 'Ioannes apostolus (Octava)',
-            'Ioan.ap (Vigilia)': 'Ioannes apostolus (Vigilia)',
-            'Oct.Ioan.ap': 'Ioannes apostolus (Octava)',
-            'Innoc.mm': 'Innocentes',
-            'Oct.Innoc.mm': 'Innocentes (Octava)',
-            'Circ': 'Circumcisio',
-            'Circ (Vigilia)': 'Circumcisio (Vigilia)',
-            'Vig.Ep': 'Epiphania (Vigilia)',
-            'Ep': 'Epiphania',
-            'Die2.Ep': 'Epiphania (Die 2)',
-            'Die3.Ep': 'Epiphania (Die 3)',
-            'Die4.Ep': 'Epiphania (Die 4)',
-            'Die5.Ep': 'Epiphania (Die 5)',
-            'Die6.Ep': 'Epiphania (Die 6)',
-            'Die7.Ep': 'Epiphania (Die 7)',
-            'Oct.Ep (Vigilia)': 'Epiphania (Octava Vigilia)',
-            'Oct.Ep': 'Epiphania (Octava)',
-            'Thomas.m': 'Thomas martyr',
-            'Transl.Iacobus.ap': 'Iacobus maior (Translatio)',
-            'Silvester.cf': 'Silvester papa',
-            'Columba.m': 'Columba',
-            'D70': 'Septuagesima',
-            'D60': 'Sexagesima',
-            'D50': 'Quinquagesima',
-            'Cin': 'Cinerum',
-            'Pasc': 'Resurrectio Domini',
-            'Pasc.annotinum': 'Pascha annotinum',
-            'D.prop': 'Dominica propria',
-            'Rogat': 'Rogationes',
-            'Vig.Asc': 'Ascensio Domini (Vigilia)',
-            'Asc': 'Ascensio Domini',
-            'Oct.Asc': 'Ascensio Domini (Octava)',
-            'Vig.Pent': 'Pentecostes (Vigilia)',
-            'Pent': 'Pentecostes',
-            'Oct.Pent': 'Pentecostes (Octava)',
-            'Trin': 'Trinitas',
-            'Oct.Trin': 'Trinitas (Octava)',
-            'Vig.Corp': 'Corpus Christi (Vigilia)',
-            'Corp': 'Corpus Christi',
-            'Die2.Corp': 'Corpus Christi (Die 2)',
-            'Die3.Corp': 'Corpus Christi (Die 3)',
-            'Die4.Corp': 'Corpus Christi (Die 4)',
-            'Die5.Corp': 'Corpus Christi (Die 5)',
-            'Die6.Corp': 'Corpus Christi (Die 6)',
-            'Die7.Corp': 'Corpus Christi (Die 7)',
-            'Oct.Corp': 'Corpus Christi (Octava)',
-        }
-        
-        if (feasts[feast] !== undefined && feasts[feast].length > 0) {
-            return feasts[feast]
-        }
-        
-        return null
-    }
-    
-    autofixFeast(row) {
-        let feast = this.getRowDataWithName('feast', row)
-        
-        if (feast.length === 0) {
-            return
-        }
-        
-        let newFeast = System3.newFeastName(feast)
-        if (newFeast !== null) {
-            this.setRowDataWithName('feast', newFeast, row)
-        }
-    }
-    
-    autofixTopics(row) {
-        let changedTopicsBuffer = []
-        
-        let topics = this.getRowDataWithName('topics', row)
-        if (topics.length === 0) {
-            return
-        }
-        
-        for (let topic of System3.iterableTopics(topics)) {
-            let newFeast = System3.newFeastName(topic)
-        
-            if (newFeast !== null) {
-                changedTopicsBuffer.push(newFeast)
-            }
-            else {
-                changedTopicsBuffer.push(topic)
-            }
-        }
-        
-        let newTopic = changedTopicsBuffer.join(', ')
-        
-        if (newTopic === topics) {
-            return
-        }
-        
-        this.setRowDataWithName('topics', newTopic, row)
-    }
-    
-    autofixCaseSensitivity(row) {
-        let topics = this.getRowDataWithName('topics', row)
-        if (topics.length === 0) {
-            return
-        }
-
-        let topicBuffer = []
-
-        for (let topic of System3.iterableTopics(topics)) {
-            let lowerTopic = topic.toLowerCase()
-            
-            let found = false
-            for (let topicInfo of this.topics) {
-                if (topicInfo.name.toLowerCase() === lowerTopic) {
-                    topicBuffer.push(topicInfo.name)
-                    found = true
-                    break
-                }
-            }
-            
-            if (found === false) {
-                topicBuffer.push(topic)
-            }
-        }
-        
-        let newTopic = topicBuffer.join(', ')
-        
-        if (topics !== newTopic) {
-            this.setRowDataWithName('topics', newTopic, row)
-        }
-    }
-    
     fillEmptyFieldsInRow(row) {
+        let remark = this.getRowDataWithName('remark', row)
+        
+        if (remark === 'del') {
+            return false
+        }
+        
         row = this.autofixes(row)
         
         // genre
@@ -1430,7 +1304,10 @@ class System3
             return false
         }
 
-        this.setRowDataWithName('genre', 'Rub', row)
+        let item = this.getRowDataWithName('item', row)
+        if (item.length === 0) {
+            this.setRowDataWithName('genre', 'Rub', row)
+        }
         
         return row
     }
@@ -1484,20 +1361,19 @@ class System3
             let genre = this.getRowDataWithName('genre', row)
         
             if (genre === 'F') {
-                row[this.getIndexWithFieldName('ceremony')] = 'Mass ordinary'
-                row[this.getIndexWithFieldName('type')] = 'RIT'
-                row[this.getIndexWithFieldName('part')] = ''
-                row[this.getIndexWithFieldName('season_month')] = ''
-                row[this.getIndexWithFieldName('week')] = ''
-                row[this.getIndexWithFieldName('day')] = ''
-                row[this.getIndexWithFieldName('topics')] = ''
-                row[this.getIndexWithFieldName('mass_hour')] = ''
-                row[this.getIndexWithFieldName('layer')] = 'S/C'
+                this.setRowDataWithName('ceremony', 'Mass ordinary', row)
+                this.setRowDataWithName('type', 'RIT', row)
+                this.setRowDataWithName('part', '', row)
+                this.setRowDataWithName('season_month', '', row)
+                this.setRowDataWithName('week', '', row)
+                this.setRowDataWithName('day', '', row)
+                this.setRowDataWithName('topics', '', row)
+                this.setRowDataWithName('mass_hour', '', row)
+                this.setRowDataWithName('layer', 'S/C', row)
                 return row
             }
-            else {
-                row[this.getIndexWithFieldName('ceremony')] = 'Mass Propers'
-            }
+            
+            row[this.getIndexWithFieldName('ceremony')] = 'Mass Propers'
         }
         else if (type === 'OFF') {
             row[this.getIndexWithFieldName('ceremony')] = 'Office Propers'
@@ -1884,5 +1760,232 @@ class System3
         }
         
         return rows
+    }
+    
+    
+    autofixes(row) {
+        let genre = this.getRowDataWithName('genre', row)
+        if (genre === 'HV') {
+            this.setRowDataWithName('genre', 'H', row)
+        }
+        if (genre === 'LitV') {
+            this.setRowDataWithName('genre', 'Lit', row)
+        }
+        if (genre === 'Sec') {
+            this.setRowDataWithName('genre', 'Secr', row)
+        }
+
+        let week = this.getRowDataWithName('week', row)
+        if (week === 'HH') {
+            this.setRowDataWithName('genre', 'Gen', row)
+        }
+
+        let seasonMonth = this.getRowDataWithName('season_month', row)
+        if (seasonMonth === 'Ian') {
+            this.setRowDataWithName('season_month', 'Jan', row)
+        }
+
+        let feast = this.getRowDataWithName('feast', row)
+        if (feast === 'Innoc.mm') {
+            this.setRowDataWithName('feast', 'Innocentes', row)
+        }
+        if (feast === 'Thomas.m') {
+            this.setRowDataWithName('feast', 'Thomas martyr', row)
+        }
+
+        this.autofixCaseSensitiveInTopics(row)
+        this.autofixCaseSensitiveInCeremony(row)
+        this.autofixFeast(row)
+        this.autofixTopics(row)
+        this.autofixTrim(row)
+        
+        return row
+    }
+    
+    static newFeastName(feast) {
+        let feasts = {
+            'Vig.Nat': 'Nativitas (Vigilia)',
+            'Nat': 'Nativitas',
+            'Die2.Nat': 'Nativitas (Die 2)',
+            'Die3.Nat': 'Nativitas (Die 3)',
+            'Die4.Nat': 'Nativitas (Die 4)',
+            'Die5.Nat': 'Nativitas (Die 5)',
+            'Die6.Nat': 'Nativitas (Die 6)',
+            'Die7.Nat': 'Nativitas (Die 7)',
+            'Steph.m': 'Stephanus martyr',
+            'Oct.Steph.m': 'Stephanus martyr (Octava)',
+            'Steph.m (Adventus costae)': 'Stephanus martyr (Adventus costae)',
+            'Steph.m (Adventus reliquiarum)': 'Stephanus martyr (Adventus reliquiarum)',
+            'Steph.m (Ded altaris)': 'Stephanus martyr (Dedicatio altaris)',
+            'Steph.m (Inventio Octava)': 'Stephanus martyr (Inventio Octava)',
+            'Steph.m (Inventio)': 'Stephanus martyr (Inventio)',
+            'Steph.m (Translatio Octava)': 'Stephanus martyr (Translatio Octava)',
+            'Steph.m (Translatio)': 'Stephanus martyr (Translatio)',
+            'Ioan.ap': 'Ioannes apostolus',
+            'Ioan.ap (ante Portam Latinam Octava)': 'Ioannes apostolus (ante Portam Latinam Octava)',
+            'Ioan.ap (ante Portam Latinam)': 'Ioannes apostolus (ante Portam Latinam)',
+            'Ioan.ap (Commemoratio)': 'Ioannes apostolus (Commemoratio)',
+            'Ioan.ap (Octava)': 'Ioannes apostolus (Octava)',
+            'Ioan.ap (Vigilia)': 'Ioannes apostolus (Vigilia)',
+            'Oct.Ioan.ap': 'Ioannes apostolus (Octava)',
+            'Innoc.mm': 'Innocentes',
+            'Oct.Innoc.mm': 'Innocentes (Octava)',
+            'Circ': 'Circumcisio',
+            'Circ (Vigilia)': 'Circumcisio (Vigilia)',
+            'Vig.Ep': 'Epiphania (Vigilia)',
+            'Ep': 'Epiphania',
+            'Die2.Ep': 'Epiphania (Die 2)',
+            'Die3.Ep': 'Epiphania (Die 3)',
+            'Die4.Ep': 'Epiphania (Die 4)',
+            'Die5.Ep': 'Epiphania (Die 5)',
+            'Die6.Ep': 'Epiphania (Die 6)',
+            'Die7.Ep': 'Epiphania (Die 7)',
+            'Oct.Ep (Vigilia)': 'Epiphania (Octava Vigilia)',
+            'Oct.Ep': 'Epiphania (Octava)',
+            'Thomas.m': 'Thomas martyr',
+            'Transl.Iacobus.ap': 'Iacobus maior (Translatio)',
+            'Silvester.cf': 'Silvester papa',
+            'Columba.m': 'Columba',
+            'D70': 'Septuagesima',
+            'D60': 'Sexagesima',
+            'D50': 'Quinquagesima',
+            'Cin': 'Cinerum',
+            'Pasc': 'Resurrectio Domini',
+            'Pasc.annotinum': 'Pascha annotinum',
+            'D.prop': 'Dominica propria',
+            'Rogat': 'Rogationes',
+            'Vig.Asc': 'Ascensio Domini (Vigilia)',
+            'Asc': 'Ascensio Domini',
+            'Oct.Asc': 'Ascensio Domini (Octava)',
+            'Vig.Pent': 'Pentecostes (Vigilia)',
+            'Pent': 'Pentecostes',
+            'Oct.Pent': 'Pentecostes (Octava)',
+            'Trin': 'Trinitas',
+            'Oct.Trin': 'Trinitas (Octava)',
+            'Vig.Corp': 'Corpus Christi (Vigilia)',
+            'Corp': 'Corpus Christi',
+            'Die2.Corp': 'Corpus Christi (Die 2)',
+            'Die3.Corp': 'Corpus Christi (Die 3)',
+            'Die4.Corp': 'Corpus Christi (Die 4)',
+            'Die5.Corp': 'Corpus Christi (Die 5)',
+            'Die6.Corp': 'Corpus Christi (Die 6)',
+            'Die7.Corp': 'Corpus Christi (Die 7)',
+            'Oct.Corp': 'Corpus Christi (Octava)',
+        }
+        
+        if (feasts[feast] !== undefined && feasts[feast].length > 0) {
+            return feasts[feast]
+        }
+        
+        return null
+    }
+    
+    autofixFeast(row) {
+        let feast = this.getRowDataWithName('feast', row)
+        
+        if (feast.length === 0) {
+            return
+        }
+        
+        let newFeast = System3.newFeastName(feast)
+        if (newFeast !== null) {
+            this.setRowDataWithName('feast', newFeast, row)
+        }
+    }
+    
+    autofixTopics(row) {
+        let changedTopicsBuffer = []
+        
+        let topics = this.getRowDataWithName('topics', row)
+        if (topics.length === 0) {
+            return
+        }
+        
+        for (let topic of System3.iterableTopics(topics)) {
+            let newFeast = System3.newFeastName(topic)
+        
+            if (newFeast !== null) {
+                changedTopicsBuffer.push(newFeast)
+            }
+            else {
+                changedTopicsBuffer.push(topic)
+            }
+        }
+        
+        let newTopic = changedTopicsBuffer.join(', ')
+        
+        if (newTopic === topics) {
+            return
+        }
+        
+        this.setRowDataWithName('topics', newTopic, row)
+    }
+    
+    autofixCaseSensitiveInTopics(row) {
+        let topics = this.getRowDataWithName('topics', row)
+        if (topics.length === 0) {
+            return
+        }
+
+        let topicBuffer = []
+
+        for (let topic of System3.iterableTopics(topics)) {
+            let lowerTopic = topic.toLowerCase()
+            
+            let found = false
+            for (let topicInfo of this.topics) {
+                if (topicInfo.name.toLowerCase() === lowerTopic) {
+                    topicBuffer.push(topicInfo.name)
+                    found = true
+                    break
+                }
+            }
+            
+            if (found === false) {
+                topicBuffer.push(topic)
+            }
+        }
+        
+        let newTopic = topicBuffer.join(', ')
+        
+        if (topics !== newTopic) {
+            this.setRowDataWithName('topics', newTopic, row)
+        }
+    }
+    
+    autofixCaseSensitiveInCeremony(row) {
+        let ceremony = this.getRowDataWithName('ceremony', row)
+        if (ceremony.length === 0) {
+            return
+        }
+
+        let lowerCeremony = ceremony.toLowerCase()
+        
+        let foundCeremony = ''
+        let found = false
+        for (let indexLabel of this.indexLabels) {
+            if (indexLabel.name.toLowerCase() === lowerCeremony) {
+                foundCeremony = indexLabel.name
+                found = true
+                break
+            }
+        }
+        
+        if (found === false) {
+            return
+        }
+
+        if (ceremony !== foundCeremony && foundCeremony.length > 0) {
+            this.setRowDataWithName('ceremony', foundCeremony, row)
+        }
+    }
+    
+    autofixTrim(row) {
+        for (let index in row) {
+            let value = row[index]
+            if (value && value.trim) {
+                row[index] = value.trim()
+            }
+        }
     }
 }

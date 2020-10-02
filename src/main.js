@@ -19,7 +19,9 @@ function onOpen() {
 }
 
 function System3Version_() {
+    let system3 = new System3()
     
+    Logger.log({rows: system3.sheetWrapper.getActiveRowsCount(), first: system3.sheetWrapper.getFirstSelectedRow() })
 }
 
 function System3MigrateSheet_() {
@@ -76,8 +78,10 @@ function System3ValidatorStartValidation_() {
     
     system3.loadLists()
     let errors = system3.validate()
-
-    validatorResult.showValidatorSidebar('Conspectus Validation Result', errors)
+    
+    if (errors.length > 0) {
+        validatorResult.showValidatorSidebar('Conspectus Validation Result', errors)
+    }
 }
 
 function IndexValidatorStartValidation_() {

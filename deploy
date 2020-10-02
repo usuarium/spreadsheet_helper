@@ -29,3 +29,5 @@ do
     echo "deploy $id"
     npm run-script upload
 done
+
+cat src/main.js | sed "s/let version = '${currentId}'/let version = 'DEV'/" > tmp && mv tmp src/main.js
