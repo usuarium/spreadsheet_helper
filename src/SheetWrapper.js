@@ -33,7 +33,7 @@ class SheetWrapper
     getDataRows() {
         let sheet = SpreadsheetApp.getActiveSheet();
         let dataRange = sheet.getDataRange()
-        return sheet.getRange(2, 1, dataRange.getLastRow()-1, 22).getValues();
+        return sheet.getRange(2, 1, dataRange.getLastRow()-1, 24).getValues();
     }
     
     insertColumnAfter(position) {
