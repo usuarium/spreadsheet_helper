@@ -615,6 +615,9 @@ class System3
             case 'original_page_number':
                 return 21;          // PAGE NUMBER (ORIGINAL)
 
+            case 'page_link':
+                return 22;          // PAGE NUMBER (ORIGINAL)
+
             case 'remark':
                 return 23;          // REMARK
 

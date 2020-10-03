@@ -931,5 +931,14 @@ describe('tests System3', function() {
         system3.autofixTrim(row)
         assert.deepEqual(row, ['1', '2', '', 1, null])
     })
+    
+    it('tests del remark', () => {
+        let rawString = `14994			MISS	S	Jan		13	Epiphania (Octava)			M2			1		Ecce advenit dominator Dominus*				SzÁ			del	SzÁ`
+        let rawData = rawString.split("\n").map(r => r.split("\t"))
+        
+        console.log(system3.validateRow(rawData[0]))
+    })
+    
+    
 });
 

@@ -12,7 +12,7 @@ function onOpen() {
             SpreadsheetApp.getUi().createMenu('System 3')
                 .addItem('Migrate Sheet', 'System3MigrateSheet_')
                 .addItem('Fill Empty Values', 'System3FillEmptyValues_')
-                .addItem('Validate', 'System3ValidatorStartValidation_')
+                .addItem('Spanish Inquisition (validate)', 'System3ValidatorStartValidation_')
                 .addItem(`Version: ${version}`, 'System3Version_')
         )
     .addToUi();
