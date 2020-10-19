@@ -2,8 +2,9 @@ class IndexValidator
 {
     constructor() {
         this.indexLabelCache = {}
+        this.sheetWrapper = new SheetWrapper()
 
-        this.sheetData = []
+        this.data = []
         this.indexLabels = []
         this.books = []
 
@@ -19,14 +20,8 @@ class IndexValidator
         return this.activeSheet
     }
 
-    // sheet data
-    getSheetData() {
-        var dataRange = this.getActiveSheet().getDataRange();
-        return this.activeSheet.getRange(2, 1, dataRange.getLastRow()-1, 12).getValues();
-    }
-
     loadSheetData() {
-        this.sheetData = this.getSheetData()
+        this.data = this.sheetWrapper.getDataRows(12)
     }
 
     // index label data
@@ -78,11 +73,12 @@ class IndexValidator
         if (Number.isInteger(indexLabelRaw)) {
             indexLabelRaw = indexLabelRaw.toString()
         }
+        
+        if (indexLabelRaw.length === 0) {
+            return []
+        }
 		
-        let labels = indexLabelRaw.split(',')
-        return labels.map((label) => {
-            return label.trim()
-        })
+        return indexLabelRaw.split(',').map(label => label.trim())
     }
 	
     findRightCaseLabel(labelName) {
@@ -101,94 +97,182 @@ class IndexValidator
 	
     // validater methods
     validate() {
-        let errors = []
-    
         this.loadSheetData()
         this.loadBooksData()
         this.loadIndexLabelData()
 		
-        let lastRowCoord = this.getLastRowCoord()
-		
-        if (lastRowCoord < 2) {
-            errors.push({
-                row: 1,
-                col: 1,
-                message: `Missing rows?`
-            })
-            return errors
+        let errors = this.validateRows(this.data)
+        
+        if (errors.length > 0) {
+            let rows = []
+            for (let error of errors) {
+                rows.push(error.errorObject.row)
+            }
+            this.sheetWrapper.highlightRowsAt(rows)
+        }
+        
+        return errors
+    }
+    
+    validateRows(rows) {
+        let checkSubset = this.sheetWrapper.getActiveRowsCount() > 1
+        let firstRowIndex = 0
+        let lastRowIndex = 0
+        
+        if (checkSubset === true) {
+            firstRowIndex = this.sheetWrapper.getFirstSelectedRow() - 2
+            lastRowIndex = this.sheetWrapper.getLastSelectedRow() - 2
+        }
+        
+        let errors = []
+        for (let rowIndex in rows) {
+            if (checkSubset && (rowIndex < firstRowIndex || rowIndex > lastRowIndex)) {
+                continue
+            }
+            
+            let row = rows[rowIndex]
+            let rowErrors = this.validateRow(row)
+            
+            if (rowErrors !== true) {
+                for (let error of rowErrors) {
+                    error.rowIndex = rowIndex
+                    errors.push(error)
+                }
+            }
+        }
+        
+        return errors
+    }
+    
+    validateRow(row) {
+        let errors = []
+        
+        if (row.length != 12) {
+            let error = new CellValidationError('Missing fields?')
+            error.cellIndex = 0
+            return [error]
+        }
+  
+        let bookId = this.getRowDataWithName('shelfmark', row)
+        if (!this.isValidBookIdValue(bookId)) {
+            let error = new CellValidationError('Missing book id or invalid format')
+            error.cellIndex = this.getIndexWithFieldName('shelfmark')
+            errors.push(error)
+        }
+        else if (!this.isValidBookId(bookId)) {
+            let error = new CellValidationError(`Unknown book id: ${bookId}`)
+            error.cellIndex = this.getIndexWithFieldName('shelfmark')
+            errors.push(error)
         }
 		
-        for (let rowCoord = 2; rowCoord <= lastRowCoord; ++rowCoord) {
-            let row = this.getRowAtCoord(rowCoord)
-			
-            if (row.length != 12) {
-                errors.push({
-                    row: rowCoord,
-                    col: 1,
-                    message: `Missing fields?`
-                })
-                continue
-            }
-      
-            let bookId = row[0]
-            if (!this.isValidBookIdValue(bookId)) {
-                errors.push({
-                    row: rowCoord,
-                    col: 1,
-                    message: `Missing book id or invalid format`
-                })
-            }
-            else if (!this.isValidBookId(bookId)) {
-                errors.push({
-                    row: rowCoord,
-                    col: 1,
-                    message: `Unknown book id: ${bookId}`
-                })
-            }
-			
-            let digitalPageNumber = row[2]
-            if (!this.isValidDigitalPageNumberValue(digitalPageNumber)) {
-                errors.push({
-                    row: rowCoord,
-                    col: 3,
-                    message: `Missing digital page number or invalid format`
-                })
-            }
-            else if (!this.isValidDigitalPageNumber(digitalPageNumber, bookId)) {
-                errors.push({
-                    row: rowCoord,
-                    col: 3,
-                    message: `Invalid digital page number in book: ${bookId}`
-                })
-            }
-			
-            let indexLabelRaw = row[5]
-            let indexLabels = this.splitIndexLabels(indexLabelRaw)
-			
-            if (indexLabels.length === 0) {
-                continue
-            }
-      
+        let digitalPageNumber = this.getRowDataWithName('digital_page_number', row)
+        Logger.log(digitalPageNumber)
+        if (!this.isValidDigitalPageNumberValue(digitalPageNumber)) {
+            let error = new CellValidationError(`Missing digital page number or invalid format`)
+            error.cellIndex = this.getIndexWithFieldName('digital_page_number')
+            errors.push(error)
+        }
+        else if (!this.isValidDigitalPageNumber(digitalPageNumber, bookId)) {
+            let error = new CellValidationError(`Invalid digital page number ${digitalPageNumber} in book: ${bookId}`)
+            error.cellIndex = this.getIndexWithFieldName('digital_page_number')
+            errors.push(error)
+        }
+		
+        let indexLabelRaw = this.getRowDataWithName('labels', row)
+        
+        if (indexLabelRaw === '-') {
+            indexLabelRaw = ''
+        }
+        
+        let indexLabels = this.splitIndexLabels(indexLabelRaw)
+        Logger.log({l: indexLabels.length})
+        if (indexLabels.length !== 0) {
             for (let label of indexLabels) {
                 if (this.isValidIndexLabel(label)) {
                     continue
                 }
-        
+    
                 let castRightLabel = this.findRightCaseLabel(label)
                 if (castRightLabel !== null) {
-                    this.setIndexLabel(indexLabelRaw.replace(label, castRightLabel), rowCoord)
+                    this.setRowDataWithName('labels', indexLabelRaw.replace(label, castRightLabel), row)
                     continue
                 }
-        
-                errors.push({
-                    row: rowCoord,
-                    col: 6,
-                    message: `Unknown index label: ${label}`
-                })
+    
+                let error = new CellValidationError(`Unknown index label: ${label}`)
+                error.cellIndex = this.getIndexWithFieldName('labels')
+                errors.push(error)
             }
         }
+        
+        return errors.length === 0 ? true : errors
+    }
     
-        return errors
+    
+    getIndexWithFieldName(fieldName) {
+        switch (fieldName) {
+            case 'shelfmark':
+                return 0;           // SHELFMARK
+                
+            case 'source':
+                return 1;           // SOURCE
+
+            case 'digital_page_number':
+                return 2;          // PAGE NUMBER (DIGITAL)
+
+            case 'original_page_number':
+                return 3;          // PAGE NUMBER (ORIGINAL)
+
+            case 'title':
+                return 4;          // PAGE NUMBER (ORIGINAL)
+
+            case 'labels':
+                return 5;          // PAGE NUMBER (ORIGINAL)
+
+            case 'illustration':
+                return 6;          // PAGE NUMBER (ORIGINAL)
+
+            case 'vernacular':
+                return 7;          // PAGE NUMBER (ORIGINAL)
+
+            case 'musical_notation':
+                return 8;          // PAGE NUMBER (ORIGINAL)
+
+            case 'made_by':
+                return 9;          // MADE BY
+
+            case 'status':
+                return 10;          // MADE BY
+
+            case 'sequence':
+                return 11;          // MADE BY
+
+            case 'page_link':
+                return 12;          // PAGE NUMBER (ORIGINAL)
+        }
+        
+        throw new Error(`invalid field name: ${fieldName}`)
+    }
+    
+    getRowDataWithName(fieldName, row) {
+        let index = this.getIndexWithFieldName(fieldName)
+        
+        if (index === null) {
+            throw new Error('invalid index')
+        }
+        
+        let data = row[index] === undefined ? '' : row[index]
+        
+        return data === null ? '' : data
+    }
+    
+    setRowDataWithName(fieldName, value, row) {
+        let index = this.getIndexWithFieldName(fieldName)
+        
+        if (index === null) {
+            throw new Error('invalid index')
+        }
+        
+        row[index] = value
     }
 
     isValidBookIdValue(bookId) {

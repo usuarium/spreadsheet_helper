@@ -892,6 +892,10 @@ class System3
             layer: layer
         })
         
+        if (genres === null) {
+            return new CellValidationError(`Validation system error, genres list is empty.`)
+        }
+        
         if (genres.indexOf(genre) === -1) {
             return new CellValidationError(`Genre is invalid: ${genre}`)
         }
@@ -1588,8 +1592,12 @@ class System3
                     let topicInfo = this.getTopicInfoWithLabel(topic)
         
                     if (topicInfo !== null) {
+                        // tobb topic info alapjan
                         if (topicInfo.kind === 1 && part !== 'V') {
                             part = 'C'
+                        }
+                        else if (topicInfo.kind === 2) {
+                            part = 'V'
                         }
                         else if (topicInfo.votive) {
                             part = 'V'

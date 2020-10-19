@@ -82,14 +82,23 @@ function System3ValidatorStartValidation_() {
     if (errors.length > 0) {
         validatorResult.showValidatorSidebar('Conspectus Validation Result', errors)
     }
+    else {
+        var ui = SpreadsheetApp.getUi();
+        var response = ui.alert('Validation result', 'The given data range is valid.', ui.ButtonSet.OK);
+    }
 }
 
 function IndexValidatorStartValidation_() {
     const index = new IndexValidator()
 
     index.loadSheetData()
-    index.loadIndexLabelData()
     let errors = index.validate()
 
-    validatorResult.showValidatorSidebar('Index Validation Result', errors)
+    if (errors.length > 0) {
+        validatorResult.showValidatorSidebar('Index Validation Result', errors)
+    }
+    else {
+        var ui = SpreadsheetApp.getUi();
+        var response = ui.alert('Validation result', 'The given data range is valid.', ui.ButtonSet.OK);
+    }
 }

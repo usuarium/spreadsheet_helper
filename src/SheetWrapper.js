@@ -30,10 +30,12 @@ class SheetWrapper
         return range.getValues()[0];
     }
     
-    getDataRows() {
+    getDataRows(numberofcols) {
+        numberofcols = numberofcols === undefined ? 24 : numberofcols
+        
         let sheet = SpreadsheetApp.getActiveSheet();
         let dataRange = sheet.getDataRange()
-        return sheet.getRange(2, 1, dataRange.getLastRow()-1, 24).getValues();
+        return sheet.getRange(2, 1, dataRange.getLastRow()-1, numberofcols).getValues();
     }
     
     insertColumnAfter(position) {
