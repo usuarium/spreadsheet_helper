@@ -505,7 +505,7 @@ class System3
                     // mozarabica
                     'Officium', 'OfficiumV', 'Psallendo', 'PsallendoV', 'Tractus', 'TractusV', 
                     'Lauda', 'LaudaV', 'Sacrificium', 'SacrificiumV', 'Ad confractionem panis', 
-                    'Ad accedentes', 'Ad accedentesV', 'Communio'
+                    'Ad accedentes', 'Ad accedentesV', 'Communio', 'Benedicamen',
                 ],
                 'L': [
                     // romana
@@ -523,7 +523,7 @@ class System3
             'OFF': {
                 'G/A': [
                     'Inv', 'Ant', 'AntV', 'AntB', 'AntQ', 'AntM', 'AntN', 'R', 'RV', 'RTrop', 
-                    'Rb', 'RbV', 'H', 'Ps', 'CantVT', 'CantNT', 'W', 'WSac',
+                    'Rb', 'RbV', 'H', 'Ps', 'CantVT', 'CantNT', 'W', 'WSac', 'Benedicamen',
                 ],
                 'L': [
                     'Lec', 'Ser', 'Leg', 'Ev', 'Hom', 
