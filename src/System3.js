@@ -1999,4 +1999,10 @@ class System3
             }
         }
     }
+    
+    fixMergedCells() {
+        for (let range of this.sheetWrapper.getMergedCellRanges()) {
+            range.breakApart()
+        }
+    }
 }

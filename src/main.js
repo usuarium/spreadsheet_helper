@@ -38,6 +38,8 @@ function System3MigrateSheet_() {
     if (system3.hasMissingColumn()) {
         system3.addMissingColumns()
     }
+    
+    system3.fixMergedCells()
 }
 
 

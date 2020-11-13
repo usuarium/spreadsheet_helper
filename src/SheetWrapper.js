@@ -106,4 +106,8 @@ class SheetWrapper
             sheet.getRange(row, 1, 1, numberOfColumns).setBackground('#e6b8af')
         }
     }
+    
+    getMergedCellRanges() {
+        return SpreadsheetApp.getActiveSheet().getDataRange().getMergedRanges()
+    }
 }
