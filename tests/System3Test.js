@@ -128,7 +128,7 @@ describe('tests System3', function() {
         assert.deepEqual(system3.getValidValues('season_month', {part: 'C'}), '')
         assert.deepEqual(system3.getValidValues('season_month', {part: 'V'}), ['', 'Adv', 'Nat', 'Ep', 'LXX', 'Qu', 'Pasc', 'Pent', 'Trin', 'Gen', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
 
-        assert.deepEqual(system3.getValidValues('week', {part: 'T'}), ['H0', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'H11', 'H12', 'H13', 'H14', 'H15', 'H16', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'H23', 'H24', 'H25', 'H26', 'H27', 'QuT', 'Gen'])
+        assert.deepEqual(system3.getValidValues('week', {part: 'T'}), ['H0', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'H11', 'H12', 'H13', 'H14', 'H15', 'H16', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'H23', 'H24', 'H25', 'H26', 'H27', 'H28', 'QuT', 'Gen'])
         assert.deepEqual(system3.getValidValues('week', {part: 'S'}), '')
         assert.deepEqual(system3.getValidValues('week', {part: 'C'}), '')
         assert.deepEqual(system3.getValidValues('week', {part: 'V'}), ['H0', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'H11', 'H12', 'H13', 'H14', 'H15', 'H16', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'H23', 'H24', 'H25', 'H26', 'H27', 'QuT', 'Gen', ''])
