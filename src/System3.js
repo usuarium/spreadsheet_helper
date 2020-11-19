@@ -1494,7 +1494,6 @@ class System3
             'Rogation Days': {
                 season_month: 'Pasc',
                 week: 'H5',
-                day: 'f2',
                 topics: 'Rogat',
             },
             'stripping/washing of altars': {

@@ -936,7 +936,66 @@ describe('tests System3', function() {
         let rawString = `14994			MISS	S	Jan		13	Epiphania (Octava)			M2			1		Ecce advenit dominator Dominus*				SzÁ			del	SzÁ`
         let rawData = rawString.split("\n").map(r => r.split("\t"))
         
-        console.log(system3.validateRow(rawData[0]))
+        // console.log(system3.validateRow(rawData[0]))
+    })
+    
+    it('tests rogation days filling and validation', () => {
+        let rawString = '			RIT	T	Pasc	H5	f3			Rogat		Rogation Days		1		S/C	Or	1	Mentem familiae tuae quaesumus Domine beato Laurentio martyre tuo … pietatis exaudi.	62	31v			SK'
+        let rawData = rawString.split("\n").map(r => r.split("\t"))
+        
+        assert.deepEqual(system3.fillEmptyFieldsInRow(rawData[0]), [
+            '',
+            '',
+            '',
+            'RIT',
+            'T',
+            'Pasc',
+            'H5',
+            'f3',
+            '',
+            '',
+            'Rogat',
+            '',
+            'Rogation Days',
+            '',
+            '1',
+            '',
+            'S/C',
+            'Or',
+            '1',
+            'Mentem familiae tuae quaesumus Domine beato Laurentio martyre tuo … pietatis exaudi.',
+            '62',
+            '31v',
+            '',
+            '',
+            'SK'
+        ])
+        
+        rawString = '			RIT	T	Pasc	H5				Rogat		Rogation Days		1		S/C	Or	1	Mentem familiae tuae quaesumus Domine beato Laurentio martyre tuo … pietatis exaudi.	62	31v			SK'
+        rawData = rawString.split("\n").map(r => r.split("\t"))
+        
+        system3.indexLabels = [
+            {
+                "id": 416,
+                "name": "Rogation Days",
+            }
+        ]
+        
+        system3.topics = [
+            {
+                "id": 416,
+                "name": "Rogat",
+                "kind": 2, // C
+                "votive": false
+            }
+        ]
+        
+        let result = system3.validateRow(rawData[0])
+        
+        assert(result.length === 1)
+        assert(result[0].message === 'Invalid Part value for Day')
+        assert(result[0].row === null)
+        assert(result[0].col === 8)
     })
     
     
