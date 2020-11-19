@@ -174,7 +174,7 @@ describe('tests System3', function() {
             // mozarabica
             'Officium', 'OfficiumV', 'Psallendo', 'PsallendoV', 'Tractus', 'TractusV', 
             'Lauda', 'LaudaV', 'Sacrificium', 'SacrificiumV', 'Ad confractionem panis', 
-            'Ad accedentes', 'Ad accedentesV', 'Communio'
+            'Ad accedentes', 'Ad accedentesV', 'Communio', 'Benedicamen'
         ]);
 
         assert.deepEqual(system3.getValidValues('genre', {type: 'MISS', layer: 'S/C'}), [
@@ -207,7 +207,7 @@ describe('tests System3', function() {
 
         assert.deepEqual(system3.getValidValues('genre', {type: 'OFF', layer: 'G/A'}), [
             'Inv', 'Ant', 'AntV', 'AntB', 'AntQ', 'AntM', 'AntN', 'R', 'RV', 'RTrop', 
-            'Rb', 'RbV', 'H', 'Ps', 'CantVT', 'CantNT', 'W', 'WSac',
+            'Rb', 'RbV', 'H', 'Ps', 'CantVT', 'CantNT', 'W', 'WSac', 'Benedicamen'
         ]);
 
         assert.deepEqual(system3.getValidValues('genre', {type: 'OFF', layer: 'S/C'}), [
@@ -229,10 +229,10 @@ describe('tests System3', function() {
             // mozarabica
             'Officium', 'OfficiumV', 'Psallendo', 'PsallendoV', 'Tractus', 'TractusV',
             'Lauda', 'LaudaV', 'Sacrificium', 'SacrificiumV', 'Ad confractionem panis',
-            'Ad accedentes', 'Ad accedentesV', 'Communio',
+            'Ad accedentes', 'Ad accedentesV', 'Communio', 'Benedicamen',
 
             'Inv', 'Ant', 'AntV', 'AntB', 'AntQ', 'AntM', 'AntN', 'R', 'RV', 'RTrop',
-            'Rb', 'RbV', 'H', 'Ps', 'CantVT', 'CantNT', 'W', 'WSac',
+            'Rb', 'RbV', 'H', 'Ps', 'CantVT', 'CantNT', 'W', 'WSac', 'Benedicamen'
 
         ]);
 
@@ -726,7 +726,6 @@ describe('tests System3', function() {
         system3.setRowDataWithName('topics', '', expected)
         
         assert.deepEqual(system3.fillPart(row), expected)
-
     })
     
     
