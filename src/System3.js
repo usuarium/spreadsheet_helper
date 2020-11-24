@@ -524,6 +524,7 @@ class System3
                 'G/A': [
                     'Inv', 'Ant', 'AntV', 'AntB', 'AntQ', 'AntM', 'AntN', 'R', 'RV', 'RTrop', 
                     'Rb', 'RbV', 'H', 'Ps', 'CantVT', 'CantNT', 'W', 'WSac', 'Benedicamen',
+                    'Gr', 'GrV', 'All', 'AllV', 'Seq',
                 ],
                 'L': [
                     'Lec', 'Ser', 'Leg', 'Ev', 'Hom', 
