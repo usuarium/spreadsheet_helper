@@ -582,20 +582,23 @@ class System3
             case 'item':
                 return 19;          // ITEM
 
+            case 'standard_item':
+                return 20;          // STANDARD ITEM
+
             case 'digital_page_number':
-                return 20;          // PAGE NUMBER (DIGITAL)
+                return 21;          // PAGE NUMBER (DIGITAL)
 
             case 'original_page_number':
-                return 21;          // PAGE NUMBER (ORIGINAL)
-
-            case 'page_link':
                 return 22;          // PAGE NUMBER (ORIGINAL)
 
+            case 'page_link':
+                return 23;          // PAGE NUMBER (ORIGINAL)
+
             case 'remark':
-                return 23;          // REMARK
+                return 24;          // REMARK
 
             case 'made_by':
-                return 24;          // MADE BY
+                return 25;          // MADE BY
         }
         
         throw new Error(`invalid field name: ${fieldName}`)
