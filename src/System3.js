@@ -37,6 +37,7 @@ class System3
             'GENRE',
             'SERIES',
             'ITEM',
+            'STANDARD ITEM',
             'PAGE NUMBER (DIGITAL)',
             'PAGE NUMBER (ORIGINAL)',
             'PAGE LINK',
@@ -134,6 +135,7 @@ class System3
             'GENRE',
             'SERIES',
             'ITEM',
+            'STANDARD ITEM',
             'PAGE NUMBER (DIGITAL)',
             'PAGE NUMBER (ORIGINAL)',
             'REMARK',
@@ -205,36 +207,6 @@ class System3
         }
         
         this.headers = newHeaders
-    }
-  
-    migrateSheet() {
-        if (!this.hasShelfmarkColumn) {
-            if (this.insertHeaderAfter('SHELFMARK', 'ID') !== false) {
-                this.hasShelfmarkColumn = true
-            }
-        }
-
-        if (!this.hasSourceColumn) {
-            if (this.insertHeaderAfter('SOURCE', 'SHELFMARK') !== false) {
-                this.hasSourceColumn = true
-            }
-        }
-
-        if (!this.hasTopicsColumn) {
-            if (this.insertHeaderAfter('TOPICS', 'COMMUNE/VOTIVE') !== false) {
-                this.hasTopicsColumn = true
-            }
-        }
-
-        if (!this.hasPageLinkColumn) {
-            if (this.insertHeaderAfter('PAGE LINK', 'PAGE NUMBER (ORIGINAL)') !== false) {
-                this.hasTopicsColumn = true
-            }
-        }
-
-        this.loadSheetData()
-        this.migrateShelfmark()
-        this.migrateGenre()
     }
   
     loadDocumentName() {
@@ -913,7 +885,7 @@ class System3
         }
 
         if (type === 'OFF' && ceremony !== 'Office Propers') {
-            return new CellValidationError('Ceremony at MISS must be Mass Propers')
+            return new CellValidationError('Ceremony at OFF must be Office Propers')
         }
         
         if (type === 'RIT' && ceremony.length === 0) {
